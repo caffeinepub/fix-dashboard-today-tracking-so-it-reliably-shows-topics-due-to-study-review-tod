@@ -1,0 +1,90 @@
+{
+  "kind": "build_request",
+  "title": "Add date-based due reviews to dashboard and subtopic-level revision schedule drilldown",
+  "projectName": "Revision Planner",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-6",
+      "text": "Update the backend so the dashboard can fetch subtopics due on a specific date, including overdue items (items whose next scheduled review is earlier than the selected date).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Not only overdue topics I also want topics to be revised on perticular date including overdue topics"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes a query that accepts a selected date (day context) and returns the authenticated caller’s subtopics whose revision schedule `nextReview` is on or before that selected date (overdue + due-on-date).",
+        "Results are returned in a stable, user-friendly order (e.g., by `nextReview` ascending, with a consistent fallback) so the dashboard list does not appear to reshuffle between refreshes.",
+        "Access control matches existing behavior (caller sees their own items; admin behavior remains consistent with current app rules).",
+        "Existing calendar behavior is not changed by this backend update (no shifting or duplication of missed items in calendar)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Update the Today dashboard UI to support a specific date context (not only “today”): allow the user to pick a date, and show (a) items due on that date and (b) overdue carry-over items together for that selected date.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Not only overdue topics I also want topics to be revised on perticular date including overdue topics"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Today tab includes a date selector (English labels) that changes the dashboard’s due-items query context to the selected date.",
+        "When the selected date changes, the dashboard refreshes to show subtopics due on that date plus overdue subtopics (earlier than the selected date).",
+        "The UI clearly distinguishes “Overdue” vs “Due on selected date” (e.g., section headers/badges) using English text.",
+        "Empty states and counts reflect the selected date context (e.g., if nothing is due/overdue for that date, show a clear English empty state)."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Change revision schedule navigation so users can view a single subtopic’s revision schedule by drilling down: Main Topic → Subtopics list → click a subtopic (including completed subtopics) → view that subtopic’s revision schedule.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "And rather than clicking main topic and view all revision schedule of all the topic I want revision schedule when I click completed subtopics",
+          "Suppose after clicking main topic i should be able to c subtopics when I click on subtopics it should show revision schedule"
+        ]
+      },
+      "acceptanceCriteria": [
+        "From the Topics tab, clicking a subtopic row (or an explicit “View schedule” action) opens a dedicated view (dialog/drawer/page) showing that subtopic’s revision schedule.",
+        "Completed subtopics are also clickable and show their revision schedule (not just active subtopics).",
+        "The “View All” main-topic detail experience no longer forces displaying every subtopic schedule at once; it should prioritize showing the subtopic list and allow schedule viewing per subtopic click.",
+        "All user-facing UI text introduced/changed for this navigation is in English."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in `backend/main.mo`; only add `backend/migration.mo` changes if state schema changes are required.",
+    "Do not edit files under `frontend/src/components/ui` or any paths listed as immutable in system context; compose existing UI components instead.",
+    "Keep all user-facing text in English."
+  ],
+  "nonGoals": [
+    "Do not add third-party authentication providers (only Internet Identity).",
+    "Do not introduce external databases or non-Motoko backend services.",
+    "Do not change calendar scheduling rules beyond what is necessary to support date-based dashboard querying (no new catch-up events, no duplication)."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

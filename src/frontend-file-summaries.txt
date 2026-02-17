@@ -1,0 +1,17 @@
+{
+  "frontend/src/App.tsx": "Main application component with authentication flow, profile setup modal, theme provider, and dashboard routing.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including hierarchical topics, revision schedules, user profiles, settings, and new hook useGetSubTopicsForDate for fetching subtopics due on or before a selected date with proper cache invalidation.",
+  "frontend/src/components/Header.tsx": "Application header with branding, theme toggle, and authentication button.",
+  "frontend/src/components/Footer.tsx": "Simple footer with attribution and link to caffeine.ai.",
+  "frontend/src/components/ProfileSetupModal.tsx": "Modal dialog for first-time user profile setup requiring name input.",
+  "frontend/src/pages/Dashboard.tsx": "Main dashboard with tabbed navigation between Today, Topics, Calendar, and Settings views.",
+  "frontend/src/components/TodayView.tsx": "Revision dashboard with date selector that displays subtopics due on or before the selected date, categorizing them as \"Overdue\" or \"Due on selected date\" with proper counts and English-only messaging.",
+  "frontend/src/components/TopicsView.tsx": "Topic management interface displaying hierarchical main topics with collapsible subtopics, showing difficulty badges, completion status, and supporting create/edit/delete operations plus \"View schedule\" action for each subtopic (including completed ones).",
+  "frontend/src/components/TopicDialog.tsx": "Dialog component with tabbed interface for creating/editing main topics and subtopics, including main topic selection, difficulty levels, and study date picker for subtopics.",
+  "frontend/src/components/CalendarView.tsx": "Interactive monthly calendar displaying study dates and backend-provided planned revision dates with proper de-duplication to prevent multiple entries for the same subtopic on the same day, using normalized date keys and color-coded difficulty indicators.",
+  "frontend/src/components/SettingsView.tsx": "User settings interface for customizing revision interval sequences per difficulty level (easy, medium, hard) with add/remove functionality, reset to defaults, and preferred review days selection.",
+  "frontend/src/index.css": "Global styles with OKLCH color system featuring a purple-blue primary color scheme for both light and dark modes.",
+  "frontend/src/components/TopicDetailView.tsx": "Modal dialog displaying a main topic's subtopics list (active and completed) with clickable rows that open individual subtopic schedule views via SubTopicScheduleView.",
+  "frontend/src/utils/time.ts": "Time utility functions for converting between ICP Time and JavaScript Date objects, determining date status (overdue/today/future/on-date), date normalization, and date-to-Time conversion for backend queries.",
+  "frontend/src/components/SubTopicScheduleView.tsx": "Dialog component displaying a single subtopic's complete revision schedule with study date and all planned revision dates, showing past/today/upcoming status for each date."
+}

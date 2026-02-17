@@ -1,2 +1,3 @@
-# fix-dashboard-today-tracking-so-it-reliably-shows-topics-due-to-study-review-tod
-Exported from Caffeine project: Fix dashboard 'Today' tracking so it reliably shows topics due to study/review today
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`
