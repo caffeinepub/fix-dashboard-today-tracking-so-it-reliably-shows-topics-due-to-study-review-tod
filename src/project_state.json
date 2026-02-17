@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
+  "projectStateVersion": 9,
   "summary": "Study/revision scheduling app with calendar and a main dashboard that should show the topic to study today.",
   "architectural_notes": [
     "Today dashboard should surface overdue/carry-over items across days, while the calendar should reflect only the original scheduled date (no duplication on subsequent days)."
@@ -8,7 +8,8 @@
   "known_issues": [
     "Main dashboard does not properly track or display the topic to be studied today.",
     "Missed (not revised) topics do not reliably carry over to the next day’s Today dashboard without also appearing/duplicating in the calendar as if rescheduled.",
-    "Dashboard is currently returning/displaying only overdue topics; it should also include topics due on the selected date (e.g., today) alongside overdue items."
+    "Dashboard is currently returning/displaying only overdue topics; it should also include topics due on the selected date (e.g., today) alongside overdue items.",
+    "After deploying Version 8, the Today dashboard still shows fewer items due today than the calendar (e.g., calendar shows 5 due today but dashboard shows only 1), indicating the dashboard query and/or due-vs-overdue filtering/display is still incorrect."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -41,6 +42,22 @@
       "title": "Change revision schedule navigation so users can view a single subtopic’s revision schedule by drilling down: Main Topic → Subtopics list → click a subtopic (including completed subtopics) → view that subtopic’s revision schedule.",
       "reqIds": [
         "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-calendar-view-so-it-clearly-distinguishes-between-a-planned-revision-sessions-shown-on-the-calendar-and-b-reviews-that-are-actually-due-pending-on-the-selected-date-and-ensure-completed-subtopics-are-not-counted-as-due-pending",
+      "title": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-dashboard-today-selected-date-to-review-count-matches-the-calendar-view-s-due-pending-reviews-count-for-the-same-selected-date-by-using-the-same-definition-of-due-pending-nextreview-on-the-selected-date-plus-overdue-carry-over-exclude-completed",
+      "title": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
+      "reqIds": [
+        "REQ-10"
       ],
       "version": 1
     }

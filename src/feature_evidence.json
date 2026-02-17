@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-today-dashboard-ui-to-support-a-specific-date-context-not-only-today-allow-the-user-to-pick-a-date-and-show-a-items-due-on-that-date-and-b-overdue-carry-over-items-together-for-that-selected-date",
-      "featureTitle": "Update the Today dashboard UI to support a specific date context (not only “today”): allow the user to pick a date, and show (a) items due on that date and (b) overdue carry-over items together for that selected date.",
+      "featureId": "feature-update-the-calendar-view-so-it-clearly-distinguishes-between-a-planned-revision-sessions-shown-on-the-calendar-and-b-reviews-that-are-actually-due-pending-on-the-selected-date-and-ensure-completed-subtopics-are-not-counted-as-due-pending",
+      "featureTitle": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
       "files": [
-        "frontend/src/components/TodayView.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/utils/time.ts"
+        "frontend/src/components/CalendarView.tsx",
+        "frontend/src/utils/reviewStatus.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,17 +17,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-7"
+        "REQ-9"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-change-revision-schedule-navigation-so-users-can-view-a-single-subtopic-s-revision-schedule-by-drilling-down-main-topic-subtopics-list-click-a-subtopic-including-completed-subtopics-view-that-subtopic-s-revision-schedule",
-      "featureTitle": "Change revision schedule navigation so users can view a single subtopic’s revision schedule by drilling down: Main Topic → Subtopics list → click a subtopic (including completed subtopics) → view that subtopic’s revision schedule.",
+      "featureId": "feature-ensure-the-dashboard-today-selected-date-to-review-count-matches-the-calendar-view-s-due-pending-reviews-count-for-the-same-selected-date-by-using-the-same-definition-of-due-pending-nextreview-on-the-selected-date-plus-overdue-carry-over-exclude-completed",
+      "featureTitle": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
       "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx",
-        "frontend/src/components/TopicDetailView.tsx",
-        "frontend/src/components/TopicsView.tsx"
+        "frontend/src/components/TodayView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -39,7 +36,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-10"
       ],
       "confidence": "high"
     }

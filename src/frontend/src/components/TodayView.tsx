@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useGetSubTopicsForDate, useUpdateRevisionSchedule, useGetRevisionSchedule } from '../hooks/useQueries';
+import { useGetSubTopics, useGetRevisionSchedule, useUpdateRevisionSchedule } from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, Loader2, AlertCircle, Calendar } from 'lucide-react';
 import { Difficulty } from '../backend';
-import { isBeforeDate, isOnDate, getDaysOverdue, dateToTime, getStartOfToday } from '../utils/time';
+import { getDaysOverdue, getStartOfToday } from '../utils/time';
+import { getDueReviewsForDate } from '../utils/reviewStatus';
 
 const difficultyColors = {
   [Difficulty.easy]: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
@@ -17,18 +18,22 @@ const difficultyColors = {
 
 export default function TodayView() {
   const [selectedDate, setSelectedDate] = useState<Date>(getStartOfToday());
-  const selectedDateEndOfDay = useMemo(() => {
-    const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
-    return endOfDay;
-  }, [selectedDate]);
-
-  const targetTime = useMemo(() => dateToTime(selectedDateEndOfDay), [selectedDateEndOfDay]);
-  const { data: subTopicsForDate, isLoading } = useGetSubTopicsForDate(targetTime);
-  const { data: revisionSchedules } = useGetRevisionSchedule();
+  
+  const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopics();
+  const { data: revisionSchedules, isLoading: schedulesLoading } = useGetRevisionSchedule();
   const updateSchedule = useUpdateRevisionSchedule();
 
-  // Create a map of subTopicId -> nextReview for quick lookup
+  const isLoading = subTopicsLoading || schedulesLoading;
+
+  // Use shared logic to compute due/pending reviews
+  const categorizedTopics = useMemo(() => {
+    if (!subTopics || !revisionSchedules) {
+      return { overdue: [], dueOnDate: [], total: 0 };
+    }
+    return getDueReviewsForDate(selectedDate, subTopics, revisionSchedules);
+  }, [selectedDate, subTopics, revisionSchedules]);
+
+  // Create schedule map for displaying days overdue
   const scheduleMap = useMemo(() => {
     const map = new Map<string, bigint>();
     revisionSchedules?.forEach(schedule => {
@@ -36,25 +41,6 @@ export default function TodayView() {
     });
     return map;
   }, [revisionSchedules]);
-
-  // Categorize subtopics by their review status relative to selected date
-  const categorizedTopics = useMemo(() => {
-    if (!subTopicsForDate) return { overdue: [], dueOnDate: [] };
-
-    const overdue = subTopicsForDate.filter(st => {
-      if (st.completed) return false;
-      const nextReview = scheduleMap.get(st.id.toString()) || st.studyDate;
-      return isBeforeDate(nextReview, selectedDate);
-    });
-
-    const dueOnDate = subTopicsForDate.filter(st => {
-      if (st.completed) return false;
-      const nextReview = scheduleMap.get(st.id.toString()) || st.studyDate;
-      return isOnDate(nextReview, selectedDate);
-    });
-
-    return { overdue, dueOnDate };
-  }, [subTopicsForDate, scheduleMap, selectedDate]);
 
   const handleReview = (subTopicId: bigint) => {
     updateSchedule.mutate(subTopicId);
@@ -80,7 +66,7 @@ export default function TodayView() {
     );
   }
 
-  const totalPending = categorizedTopics.overdue.length + categorizedTopics.dueOnDate.length;
+  const totalPending = categorizedTopics.total;
 
   return (
     <div className="space-y-6">

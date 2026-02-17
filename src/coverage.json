@@ -1,72 +1,49 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T04:48:24.609Z",
+  "generatedAt": "2026-02-17T10:13:00.007Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
+    "total": 2,
     "implemented": 2,
     "items": [
       {
-        "id": "REQ-6",
-        "summary": "Update the backend so the dashboard can fetch subtopics due on a specific date, including overdue items (items whose next scheduled review is earlier than the selected date).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Update the Today dashboard UI to support a specific date context (not only “today”): allow the user to pick a date, and show (a) items due on that date and (b) overdue carry-over items together for that selected date.",
+        "id": "REQ-10",
+        "summary": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/time.ts",
           "frontend/src/components/TodayView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/time.ts",
           "frontend/src/components/TodayView.tsx"
         ]
       },
       {
-        "id": "REQ-8",
-        "summary": "Change revision schedule navigation so users can view a single subtopic’s revision schedule by drilling down: Main Topic → Subtopics list → click a subtopic (including completed subtopics) → view that subtopic’s revision schedule.",
+        "id": "REQ-9",
+        "summary": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/components/TopicDetailView.tsx",
-          "frontend/src/components/TopicsView.tsx"
+          "frontend/src/utils/reviewStatus.ts",
+          "frontend/src/components/CalendarView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/components/TopicDetailView.tsx",
-          "frontend/src/components/TopicsView.tsx"
+          "frontend/src/utils/reviewStatus.ts",
+          "frontend/src/components/CalendarView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/SubTopicScheduleView.tsx",
+    "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/TodayView.tsx",
-    "frontend/src/components/TopicDetailView.tsx",
-    "frontend/src/components/TopicsView.tsx",
-    "frontend/src/config.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/utils/time.ts",
+    "frontend/src/utils/reviewStatus.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

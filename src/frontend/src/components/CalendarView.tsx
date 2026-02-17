@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { useGetAllPlannedRevisionDates, useGetSubTopics } from '../hooks/useQueries';
+import { useGetAllPlannedRevisionDates, useGetSubTopics, useGetRevisionSchedule } from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIconLucide } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIconLucide, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Difficulty } from '../backend';
 import { getDateKey, timeToDate } from '../utils/time';
+import { getDueReviewsForDate, getPlannedItemsForDate } from '../utils/reviewStatus';
 
 const difficultyColors = {
   [Difficulty.easy]: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
@@ -27,10 +28,11 @@ interface CalendarEvent {
 export default function CalendarView() {
   const { data: allPlannedDates, isLoading: datesLoading } = useGetAllPlannedRevisionDates();
   const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopics();
+  const { data: revisionSchedules, isLoading: schedulesLoading } = useGetRevisionSchedule();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const isLoading = datesLoading || subTopicsLoading;
+  const isLoading = datesLoading || subTopicsLoading || schedulesLoading;
 
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -144,6 +146,21 @@ export default function CalendarView() {
     return compareDate < today;
   };
 
+  // Compute planned items and due/pending reviews for selected date
+  const selectedDateData = useMemo(() => {
+    if (!selectedDate || !subTopics || !allPlannedDates || !revisionSchedules) {
+      return {
+        plannedItems: { studyItems: [], revisionItems: [], total: 0 },
+        dueReviews: { overdue: [], dueOnDate: [], total: 0 },
+      };
+    }
+
+    const plannedItems = getPlannedItemsForDate(selectedDate, subTopics, allPlannedDates);
+    const dueReviews = getDueReviewsForDate(selectedDate, subTopics, revisionSchedules);
+
+    return { plannedItems, dueReviews };
+  }, [selectedDate, subTopics, allPlannedDates, revisionSchedules]);
+
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   const selectedDateIsToday = selectedDate ? isToday(selectedDate) : false;
   const selectedDateIsPast = selectedDate ? isPast(selectedDate) : false;
@@ -217,18 +234,14 @@ export default function CalendarView() {
                       <span>{date.getDate()}</span>
                       {hasEvents && (
                         <div className="flex gap-0.5 mt-1 flex-wrap justify-center">
-                          {allDifficulties.slice(0, 3).map((diff, i) => (
-                            <div 
-                              key={i} 
-                              className={`h-1.5 w-1.5 rounded-full ${
-                                diff === Difficulty.easy ? 'bg-green-500' :
-                                diff === Difficulty.medium ? 'bg-yellow-500' :
-                                'bg-red-500'
-                              }`} 
-                            />
-                          ))}
-                          {allDifficulties.length > 3 && (
-                            <span className="text-xs ml-0.5">+{allDifficulties.length - 3}</span>
+                          {allDifficulties.includes(Difficulty.hard) && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          )}
+                          {allDifficulties.includes(Difficulty.medium) && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                          )}
+                          {allDifficulties.includes(Difficulty.easy) && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                           )}
                         </div>
                       )}
@@ -240,76 +253,173 @@ export default function CalendarView() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle>
-                {selectedDate 
-                  ? format(selectedDate, 'MMMM d')
-                  : 'Select a date'}
-              </CardTitle>
-              {selectedDateIsToday && (
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                  Today
-                </Badge>
-              )}
-              {selectedDateIsPast && !selectedDateIsToday && (
-                <Badge variant="outline" className="text-xs">Past</Badge>
-              )}
-            </div>
-            <CardDescription>
-              {selectedDateEvents.length > 0
-                ? `${selectedDateEvents.length} item${selectedDateEvents.length !== 1 ? 's' : ''}`
-                : 'No items'}
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIconLucide className="h-5 w-5" />
+              {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
+            </CardTitle>
+            {selectedDate && (
+              <CardDescription>
+                {selectedDateIsToday ? 'Today' : selectedDateIsPast ? 'Past date' : 'Future date'}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
-            {selectedDateEvents.length > 0 ? (
-              <div className="space-y-3">
-                {selectedDateEvents.map((event, idx) => {
-                  const subTopic = getSubTopicById(event.subTopicId);
-                  if (!subTopic) return null;
-                  
-                  return (
-                    <div key={`${event.type}-${event.subTopicId.toString()}-${idx}`} className="rounded-lg border p-3 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground mb-1">{subTopic.mainTopicTitle}</p>
-                          <h4 className="font-medium">{subTopic.title}</h4>
-                        </div>
-                        <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                          {subTopic.difficulty}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{subTopic.description}</p>
-                      <Badge 
-                        variant="secondary" 
-                        className={event.type === 'study' 
-                          ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-xs'
-                          : 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20 text-xs'
-                        }
-                      >
-                        {event.type === 'study' ? (
-                          <>
-                            <CalendarIconLucide className="h-3 w-3 mr-1" />
-                            Study Date
-                          </>
-                        ) : (
-                          'Revision Session'
-                        )}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                {selectedDate ? 'No items for this day' : 'Click on a date to view details'}
+            {!selectedDate ? (
+              <p className="text-sm text-muted-foreground">
+                Click on a date in the calendar to view details
               </p>
+            ) : selectedDateEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No scheduled items for this date
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {/* Planned Items Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Planned Items</h4>
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedDateData.plannedItems.total}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Study sessions and scheduled revision dates
+                  </p>
+                  <div className="space-y-2">
+                    {selectedDateEvents.map((event, idx) => {
+                      const subTopic = getSubTopicById(event.subTopicId);
+                      if (!subTopic) return null;
+                      
+                      return (
+                        <div
+                          key={`${event.subTopicId}-${idx}`}
+                          className="p-3 rounded-lg border bg-card text-card-foreground"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
+                            <Badge variant="outline" className={`${difficultyColors[event.difficulty]} text-xs shrink-0`}>
+                              {event.difficulty}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {event.type === 'study' ? 'Study' : 'Revision'}
+                            </Badge>
+                            {subTopic.completed && (
+                              <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400">
+                                Completed
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Due/Pending Reviews Section */}
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      {selectedDateData.dueReviews.total > 0 && (
+                        <AlertCircle className="h-4 w-4 text-destructive" />
+                      )}
+                      Reviews Needing Action
+                    </h4>
+                    <Badge 
+                      variant={selectedDateData.dueReviews.total > 0 ? "destructive" : "secondary"} 
+                      className="text-xs"
+                    >
+                      {selectedDateData.dueReviews.total}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Subtopics due for review (excludes completed)
+                  </p>
+                  {selectedDateData.dueReviews.total === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      No pending reviews for this date
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedDateData.dueReviews.overdue.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-destructive">
+                            Overdue ({selectedDateData.dueReviews.overdue.length})
+                          </p>
+                          {selectedDateData.dueReviews.overdue.map((subTopic) => (
+                            <div
+                              key={`overdue-${subTopic.id}`}
+                              className="p-3 rounded-lg border border-destructive/50 bg-destructive/5"
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
+                                <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs shrink-0`}>
+                                  {subTopic.difficulty}
+                                </Badge>
+                              </div>
+                              <Badge variant="destructive" className="text-xs">
+                                Overdue
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {selectedDateData.dueReviews.dueOnDate.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-primary">
+                            Due on this date ({selectedDateData.dueReviews.dueOnDate.length})
+                          </p>
+                          {selectedDateData.dueReviews.dueOnDate.map((subTopic) => (
+                            <div
+                              key={`due-${subTopic.id}`}
+                              className="p-3 rounded-lg border border-primary/50 bg-primary/5"
+                            >
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
+                                <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs shrink-0`}>
+                                  {subTopic.difficulty}
+                                </Badge>
+                              </div>
+                              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                                Due {selectedDateIsToday ? 'Today' : 'on this date'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Legend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <span className="text-sm">Hard</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <span className="text-sm">Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <span className="text-sm">Easy</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,59 +1,42 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Date-based due reviews on Today dashboard and subtopic schedule drilldown",
+  "title": "Align Calendar vs Dashboard due/pending review counts",
   "requirements": [
     {
-      "id": "REQ-7",
-      "summary": "Add a selected-date context to the Today dashboard, querying and displaying both overdue and due-on-date subtopics for that date.",
+      "id": "REQ-9",
+      "summary": "Update CalendarView to separate planned calendar items from due/pending reviews for the selected date, excluding completed subtopics from due/pending.",
       "acceptanceCriteria": [
-        "The Today tab includes a date selector (English labels) that changes the dashboard’s due-items query context to the selected date.",
-        "When the selected date changes, the dashboard refreshes to show subtopics due on that date plus overdue subtopics (earlier than the selected date).",
-        "The UI clearly distinguishes “Overdue” vs “Due on selected date” (e.g., section headers/badges) using English text.",
-        "Empty states and counts reflect the selected date context (e.g., if nothing is due/overdue for that date, show a clear English empty state)."
+        "In CalendarView, the selected-day details panel shows separate counts for: (1) planned items (study + planned revisions) and (2) due/pending reviews for that date (excluding completed subtopics).",
+        "CalendarView does not label all planned revisions on the selected date as 'due'; it uses user-facing text that makes the distinction explicit in English.",
+        "Completed subtopics are excluded from the CalendarView 'due/pending' count and due/pending list."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add a React Query hook (e.g., useGetSubTopicsForDate) that calls the backend capability for fetching subtopics due on/before a selected day (using the existing actor method that accepts a target date). Ensure the hook uses a queryKey that includes the selected date value so results refetch and cache correctly when the user changes the date."
+          "path": "frontend/src/utils/reviewStatus.ts",
+          "operation": "create",
+          "description": "Add shared, date-based helper(s) to compute the app-wide definition of due/pending reviews for a selected date (due on date + overdue carry-over; exclude completed) using subtopics + revision schedules, so CalendarView and TodayView can share identical logic."
         },
         {
-          "path": "frontend/src/utils/time.ts",
+          "path": "frontend/src/components/CalendarView.tsx",
           "operation": "modify",
-          "description": "Add date-context helpers to support a selected-day dashboard view (e.g., converting a local Date start-of-day to ICP Time bigint, checking if a schedule time is before a selected day, and checking if a schedule time is on the selected day). Keep all logic timezone-consistent with existing start-of-day normalization."
-        },
-        {
-          "path": "frontend/src/components/TodayView.tsx",
-          "operation": "modify",
-          "description": "Update the Today dashboard UI to include a date selector with English labeling and to drive the due-items query using the selected date. Replace today-only categorization with selected-date categorization: split results into two sections with clear English headers/badges (\"Overdue\" vs \"Due on selected date\"). Update summary text, counts, and empty states to reflect the selected date context. Continue to use existing shadcn-ui components (e.g., Card/Badge/Button and an existing input/date control) for layout and styling; verify the component's usage instructions before implementing."
+          "description": "Update the selected-day details panel UI to clearly separate (A) planned items shown on the calendar (study + planned revision sessions) from (B) due/pending reviews for that selected date, computed via the shared reviewStatus helper and revision schedules; ensure completed subtopics never appear in due/pending counts/lists; adjust user-facing English text so planned items are not labeled as due."
         }
       ]
     },
     {
-      "id": "REQ-8",
-      "summary": "Enable subtopic-level revision schedule drilldown from Topics: main topic shows subtopic list; clicking any subtopic (including completed) opens its schedule view.",
+      "id": "REQ-10",
+      "summary": "Ensure TodayView 'to review' count matches CalendarView due/pending definition for the same selected date (due on date + overdue; exclude completed) and continues to display overdue vs due-on-date categories.",
       "acceptanceCriteria": [
-        "From the Topics tab, clicking a subtopic row (or an explicit “View schedule” action) opens a dedicated view (dialog/drawer/page) showing that subtopic’s revision schedule.",
-        "Completed subtopics are also clickable and show their revision schedule (not just active subtopics).",
-        "The “View All” main-topic detail experience no longer forces displaying every subtopic schedule at once; it should prioritize showing the subtopic list and allow schedule viewing per subtopic click.",
-        "All user-facing UI text introduced/changed for this navigation is in English."
+        "When the selected date in TodayView is the same day selected in CalendarView, the TodayView total 'to review' count equals the CalendarView 'due/pending reviews' count.",
+        "TodayView continues to show both categories: overdue (before selected date) and due on selected date, and excludes completed subtopics from both lists.",
+        "All user-facing text remains in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/SubTopicScheduleView.tsx",
-          "operation": "create",
-          "description": "Create a dedicated subtopic schedule view as a Dialog (or similar) that displays the selected subtopic’s revision schedule dates. Use existing shadcn-ui Dialog/Card/Badge components and existing planned-revision query hook(s) to render the schedule; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/TopicDetailView.tsx",
+          "path": "frontend/src/components/TodayView.tsx",
           "operation": "modify",
-          "description": "Refactor the main-topic detail dialog to prioritize a subtopics list (including completed subtopics) rather than rendering every subtopic schedule inline. Make each subtopic row clickable (or add an explicit \"View schedule\" action) to open SubTopicScheduleView for that subtopic. Ensure all new/changed labels are in English. Continue composing existing shadcn-ui components; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/TopicsView.tsx",
-          "operation": "modify",
-          "description": "Adjust Topics tab interactions so the main-topic \"View All\" flow opens the updated TopicDetailView that focuses on the subtopic list and supports schedule drilldown. Ensure completed subtopics are presented as clickable in the main-topic detail experience (via TopicDetailView) and that any newly introduced UI text is English."
+          "description": "Refactor TodayView to compute overdue + due-on-selected-date from the same shared reviewStatus helper used by CalendarView (based on revision schedules nextReview plus overdue carry-over; exclude completed) so the displayed total 'to review' count and the two category lists always match the CalendarView due/pending reviews definition for the same selected date."
         }
       ]
     }
