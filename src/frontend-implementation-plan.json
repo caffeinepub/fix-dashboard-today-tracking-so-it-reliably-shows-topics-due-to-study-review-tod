@@ -1,42 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Align Calendar vs Dashboard due/pending review counts",
+  "title": "Subtopic Schedule: show revision progress and completion/overdue styling",
   "requirements": [
     {
-      "id": "REQ-9",
-      "summary": "Update CalendarView to separate planned calendar items from due/pending reviews for the selected date, excluding completed subtopics from due/pending.",
+      "id": "REQ-11",
+      "summary": "Show a revision progress indicator (completed/total and remaining) in the Subtopic Schedule dialog, consistent with planned revision dates.",
       "acceptanceCriteria": [
-        "In CalendarView, the selected-day details panel shows separate counts for: (1) planned items (study + planned revisions) and (2) due/pending reviews for that date (excluding completed subtopics).",
-        "CalendarView does not label all planned revisions on the selected date as 'due'; it uses user-facing text that makes the distinction explicit in English.",
-        "Completed subtopics are excluded from the CalendarView 'due/pending' count and due/pending list."
+        "When a user opens a subtopic schedule dialog, the UI shows a progress indicator for revisions completed out of total planned revisions (e.g., \"Progress: 4/5\" or \"1/5 remaining\").",
+        "Total planned revisions are computed consistently with the existing planned revision dates returned by `useGetPlannedRevisionDates` (i.e., the denominator matches the number of planned revision sessions shown, excluding the initial \"Study Date\").",
+        "The completed count uses the existing subtopic data (e.g., `subTopic.currentIntervalIndex`) and is capped to the total planned revisions so the UI never displays values like \"6/5\"."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/reviewStatus.ts",
-          "operation": "create",
-          "description": "Add shared, date-based helper(s) to compute the app-wide definition of due/pending reviews for a selected date (due on date + overdue carry-over; exclude completed) using subtopics + revision schedules, so CalendarView and TodayView can share identical logic."
-        },
-        {
-          "path": "frontend/src/components/CalendarView.tsx",
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
           "operation": "modify",
-          "description": "Update the selected-day details panel UI to clearly separate (A) planned items shown on the calendar (study + planned revision sessions) from (B) due/pending reviews for that selected date, computed via the shared reviewStatus helper and revision schedules; ensure completed subtopics never appear in due/pending counts/lists; adjust user-facing English text so planned items are not labeled as due."
+          "description": "Compute total planned revisions from `plannedDates.length` (excluding the study date) and compute completed revisions from `subTopic.currentIntervalIndex` capped to the total; render an English progress indicator near the \"Revision Schedule\" header (e.g., using existing shadcn/ui Badge or muted text). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-10",
-      "summary": "Ensure TodayView 'to review' count matches CalendarView due/pending definition for the same selected date (due on date + overdue; exclude completed) and continues to display overdue vs due-on-date categories.",
+      "id": "REQ-12",
+      "summary": "Visually mark each scheduled revision session as Completed (green), Overdue (red), or neutral for upcoming/today in the Subtopic Schedule list.",
       "acceptanceCriteria": [
-        "When the selected date in TodayView is the same day selected in CalendarView, the TodayView total 'to review' count equals the CalendarView 'due/pending reviews' count.",
-        "TodayView continues to show both categories: overdue (before selected date) and due on selected date, and excludes completed subtopics from both lists.",
-        "All user-facing text remains in English."
+        "For a subtopic with some completed revisions, the earliest N revision sessions (where N is the completed revision count) are styled as completed (green).",
+        "For any revision session with a date before today that is not yet completed, the session is styled as not completed/overdue (red).",
+        "Sessions on today or in the future that are not completed are not red; they remain neutral (or use existing today/upcoming styling) and do not appear as completed.",
+        "All new/updated user-visible labels (e.g., \"Completed\", \"Overdue\", \"Progress\") are in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TodayView.tsx",
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
           "operation": "modify",
-          "description": "Refactor TodayView to compute overdue + due-on-selected-date from the same shared reviewStatus helper used by CalendarView (based on revision schedules nextReview plus overdue carry-over; exclude completed) so the displayed total 'to review' count and the two category lists always match the CalendarView due/pending reviews definition for the same selected date."
+          "description": "Update the schedule row rendering to derive a per-row completion status for revision items (excluding the \"Study Date\" row): mark the earliest N revision rows as Completed (green) where N is the capped completed count; mark past (before today) non-completed revision rows as Overdue (red); keep today/future non-completed rows neutral while preserving existing today/upcoming badges. Add English status badges/labels using existing shadcn/ui Badge styling (no edits under `frontend/src/components/ui`). Verify the component's usage instructions before implementing."
         }
       ]
     }

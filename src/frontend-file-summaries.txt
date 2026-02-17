@@ -13,6 +13,6 @@
   "frontend/src/index.css": "Global styles with OKLCH color system featuring a purple-blue primary color scheme for both light and dark modes.",
   "frontend/src/components/TopicDetailView.tsx": "Modal dialog displaying a main topic's subtopics list (active and completed) with clickable rows that open individual subtopic schedule views via SubTopicScheduleView.",
   "frontend/src/utils/time.ts": "Time utility functions for converting between ICP Time and JavaScript Date objects, determining date status (overdue/today/future/on-date), date normalization, and date-to-Time conversion for backend queries.",
-  "frontend/src/components/SubTopicScheduleView.tsx": "Dialog component displaying a single subtopic's complete revision schedule with study date and all planned revision dates, showing past/today/upcoming status for each date.",
+  "frontend/src/components/SubTopicScheduleView.tsx": "Dialog component displaying a single subtopic's complete revision schedule with study date and all planned revision dates, showing completion progress (e.g., \"4/5\" or \"1 remaining\"), marking completed revisions in green, overdue revisions in red, and neutral styling for upcoming/today sessions.",
   "frontend/src/utils/reviewStatus.ts": "Shared utility functions for computing due/pending reviews and planned items for a specific date, ensuring consistent logic across TodayView and CalendarView with proper handling of completed subtopics."
 }

@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T10:13:00.007Z",
+  "generatedAt": "2026-02-17T10:22:57.601Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,27 +11,25 @@
     "implemented": 2,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
+        "id": "REQ-11",
+        "summary": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TodayView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/TodayView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx"
         ]
       },
       {
-        "id": "REQ-9",
-        "summary": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
+        "id": "REQ-12",
+        "summary": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/reviewStatus.ts",
-          "frontend/src/components/CalendarView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/reviewStatus.ts",
-          "frontend/src/components/CalendarView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx"
         ]
       }
     ]
@@ -41,9 +39,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/CalendarView.tsx",
-    "frontend/src/components/TodayView.tsx",
-    "frontend/src/utils/reviewStatus.ts",
+    "frontend/src/components/SubTopicScheduleView.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

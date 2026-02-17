@@ -1,53 +1,57 @@
 {
   "kind": "build_request",
-  "title": "Fix discrepancy between Calendar and Dashboard due-review counts",
-  "projectName": "Revision Tracker",
+  "title": "Show revision completion status and progress in Subtopic Schedule view",
+  "projectName": "Revision Planner",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-9",
-      "text": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
+      "id": "REQ-11",
+      "text": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "recent-messages-4"
         ],
         "quotes": [
-          "In calendar there are 5 topics to be revised today whereas in dashboard to be revised is only one topic there is discrepancy kindly modify it"
+          "suppose I have to revise it 5 times totally give number by side that how many times I have revise like 4/5 or remaining 1/5 like that"
         ]
       },
       "acceptanceCriteria": [
-        "In CalendarView, the selected-day details panel shows separate counts for: (1) planned items (study + planned revisions) and (2) due/pending reviews for that date (excluding completed subtopics).",
-        "CalendarView does not label all planned revisions on the selected date as 'due'; it uses user-facing text that makes the distinction explicit in English.",
-        "Completed subtopics are excluded from the CalendarView 'due/pending' count and due/pending list."
+        "When a user opens a subtopic schedule dialog, the UI shows a progress indicator for revisions completed out of total planned revisions (e.g., \"Progress: 4/5\" or \"1/5 remaining\").",
+        "Total planned revisions are computed consistently with the existing planned revision dates returned by `useGetPlannedRevisionDates` (i.e., the denominator matches the number of planned revision sessions shown, excluding the initial \"Study Date\").",
+        "The completed count uses the existing subtopic data (e.g., `subTopic.currentIntervalIndex`) and is capped to the total planned revisions so the UI never displays values like \"6/5\"."
       ]
     },
     {
-      "id": "REQ-10",
-      "text": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
+      "id": "REQ-12",
+      "text": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "recent-messages-4"
         ],
         "quotes": [
-          "See in dashboard still the topics to be revised today isn't showing properly"
+          "if I complete the revision according to schedule or later show in green if not in read"
         ]
       },
       "acceptanceCriteria": [
-        "When the selected date in TodayView is the same day selected in CalendarView, the TodayView total 'to review' count equals the CalendarView 'due/pending reviews' count.",
-        "TodayView continues to show both categories: overdue (before selected date) and due on selected date, and excludes completed subtopics from both lists.",
-        "All user-facing text remains in English."
+        "For a subtopic with some completed revisions, the earliest N revision sessions (where N is the completed revision count) are styled as completed (green).",
+        "For any revision session with a date before today that is not yet completed, the session is styled as not completed/overdue (red).",
+        "Sessions on today or in the future that are not completed are not red; they remain neutral (or use existing today/upcoming styling) and do not appear as completed.",
+        "All new/updated user-visible labels (e.g., \"Completed\", \"Overdue\", \"Progress\") are in English."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
-    "Respect the single-actor Motoko backend architecture (no additional backend services)."
+    "Do not edit files under `frontend/src/components/ui` (compose existing UI components instead).",
+    "Do not modify any frontend files listed in `frontend.immutablePaths` in SYSTEM_CONTEXT.",
+    "Keep all user-facing text in English.",
+    "Backend must remain a single Motoko actor in `backend/main.mo`; only introduce migrations if state schema changes (not expected for this request)."
   ],
   "nonGoals": [
-    "Do not change the spaced-repetition interval algorithm or how planned revision dates are generated.",
-    "Do not add real-time updates (e.g., WebSockets) or third-party integrations."
+    "Do not add new authentication methods (Internet Identity remains the only auth).",
+    "Do not introduce new backend services or external databases.",
+    "Do not change the calendar logic or today-dashboard due/overdue definitions as part of this request (only the subtopic schedule dialog presentation)."
   ],
   "imageRequirements": {
     "required": [],

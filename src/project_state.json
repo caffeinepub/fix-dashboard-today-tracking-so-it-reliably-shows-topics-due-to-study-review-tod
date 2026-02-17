@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
+  "projectStateVersion": 11,
   "summary": "Study/revision scheduling app with calendar and a main dashboard that should show the topic to study today.",
   "architectural_notes": [
     "Today dashboard should surface overdue/carry-over items across days, while the calendar should reflect only the original scheduled date (no duplication on subsequent days)."
@@ -11,7 +11,7 @@
     "Dashboard is currently returning/displaying only overdue topics; it should also include topics due on the selected date (e.g., today) alongside overdue items.",
     "After deploying Version 8, the Today dashboard still shows fewer items due today than the calendar (e.g., calendar shows 5 due today but dashboard shows only 1), indicating the dashboard query and/or due-vs-overdue filtering/display is still incorrect."
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
   "existing_features": [
     {
       "id": "feature-update-the-frontend-today-dashboard-to-correctly-communicate-and-display-due-vs-overdue-items-returned-by-the-backend-in-todayview-distinguish-between-items-due-today-and-overdue-based-on-comparing-the-subtopic-s-scheduled-date-with-the-current-day-and-render-an-appropriate-label-badge-for-each-state-ensure-empty-states-and-counts-reflect-the-new-behavior-e-g-overdue-items-should-be-counted-as-needing-attention-today-keep-all-user-facing-text-in-english",
@@ -58,6 +58,22 @@
       "title": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
       "reqIds": [
         "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-subtopic-revision-schedule-dialog-frontend-src-components-subtopicscheduleview-tsx-to-display-a-progress-indicator-showing-how-many-revisions-have-been-completed-out-of-the-total-planned-revisions-for-that-subtopic-e-g-4-5-and-or-1-5-remaining-use-english-for-any-user-facing-text",
+      "title": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-subtopic-revision-schedule-list-frontend-src-components-subtopicscheduleview-tsx-visually-indicate-each-scheduled-session-s-completion-status-show-completed-sessions-in-green-completed-on-the-scheduled-date-or-later-and-show-past-sessions-that-are-not-completed-in-red-keep-upcoming-sessions-in-a-neutral-style-use-english-for-any-status-labels-badges",
+      "title": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
+      "reqIds": [
+        "REQ-12"
       ],
       "version": 1
     }
@@ -111,6 +127,12 @@
       "reqIds": [
         "REQ-6"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Enhance the subtopic revision schedule view to show completion status and progress count.\n- In the revision schedule for a selected subtopic, visually indicate sessions completed on-time or late (e.g., show in green) and not completed/overdue (e.g., show in red).\n- Display a progress indicator showing how many revisions have been completed out of the total planned (e.g., 4/5 completed or 1/5 remaining).",
+      "reqIds": [],
       "status": "pending"
     }
   ],
