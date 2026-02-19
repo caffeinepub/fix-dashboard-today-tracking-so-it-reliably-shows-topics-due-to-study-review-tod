@@ -119,6 +119,11 @@ export interface RevisionSchedule {
     studyDate: Time;
     nextReview: Time;
 }
+export interface RevisionResult {
+    message: string;
+    updatedSchedule?: RevisionSchedule;
+    success: boolean;
+}
 export interface UserProfile {
     name: string;
 }
@@ -175,6 +180,10 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     markSubTopicCompleted(id: UUID): Promise<void>;
     markSubTopicPending(id: UUID): Promise<void>;
+    /**
+     * / Set a subtopic's next revision to tomorrow and recalculate all future intervals.
+     */
+    rescheduleRevisionToNextDay(subTopicId: UUID): Promise<RevisionResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     scheduleNextReview(subTopicId: UUID, days: bigint): Promise<void>;
     setUserSettings(easyIntervals: Array<bigint>, mediumIntervals: Array<bigint>, hardIntervals: Array<bigint>, preferredDays: Array<bigint>): Promise<void>;
@@ -183,7 +192,7 @@ export interface backendInterface {
     updateRevisionSchedule(subTopicId: UUID): Promise<RevisionSchedule>;
     updateSubTopic(id: UUID, title: string, description: string, difficulty: Difficulty, studyDate: Time): Promise<void>;
 }
-import type { Difficulty as _Difficulty, MainTopic as _MainTopic, SubTopic as _SubTopic, Time as _Time, UUID as _UUID, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { Difficulty as _Difficulty, MainTopic as _MainTopic, RevisionResult as _RevisionResult, RevisionSchedule as _RevisionSchedule, SubTopic as _SubTopic, Time as _Time, UUID as _UUID, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -553,6 +562,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async rescheduleRevisionToNextDay(arg0: UUID): Promise<RevisionResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.rescheduleRevisionToNextDay(arg0);
+                return from_candid_RevisionResult_n19(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.rescheduleRevisionToNextDay(arg0);
+            return from_candid_RevisionResult_n19(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -655,6 +678,9 @@ export class Backend implements backendInterface {
 function from_candid_Difficulty_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Difficulty): Difficulty {
     return from_candid_variant_n8(_uploadFile, _downloadFile, value);
 }
+function from_candid_RevisionResult_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RevisionResult): RevisionResult {
+    return from_candid_record_n20(_uploadFile, _downloadFile, value);
+}
 function from_candid_SubTopic_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SubTopic): SubTopic {
     return from_candid_record_n15(_uploadFile, _downloadFile, value);
 }
@@ -678,6 +704,9 @@ function from_candid_opt_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     preferredReviewDays: Array<bigint>;
     hardIntervals: Array<bigint>;
 } | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_RevisionSchedule]): RevisionSchedule | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
@@ -735,6 +764,21 @@ function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uin
     return {
         subTopics: from_candid_vec_n13(_uploadFile, _downloadFile, value.subTopics),
         mainTopics: value.mainTopics
+    };
+}
+function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    message: string;
+    updatedSchedule: [] | [_RevisionSchedule];
+    success: boolean;
+}): {
+    message: string;
+    updatedSchedule?: RevisionSchedule;
+    success: boolean;
+} {
+    return {
+        message: value.message,
+        updatedSchedule: record_opt_to_undefined(from_candid_opt_n21(_uploadFile, _downloadFile, value.updatedSchedule)),
+        success: value.success
     };
 }
 function from_candid_record_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

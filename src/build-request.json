@@ -1,57 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Show revision completion status and progress in Subtopic Schedule view",
-  "projectName": "Revision Planner",
+  "title": "Remove 'reviews needing action' from calendar, add redo-next-day option in schedule, and show today + overdue in dashboard",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-11",
-      "text": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
+      "id": "REQ-13",
+      "text": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-user-latest"
         ],
         "quotes": [
-          "suppose I have to revise it 5 times totally give number by side that how many times I have revise like 4/5 or remaining 1/5 like that"
+          "In calendar view I don't need reviews needing action just show topics to be revised when I click on a particular date"
         ]
       },
       "acceptanceCriteria": [
-        "When a user opens a subtopic schedule dialog, the UI shows a progress indicator for revisions completed out of total planned revisions (e.g., \"Progress: 4/5\" or \"1/5 remaining\").",
-        "Total planned revisions are computed consistently with the existing planned revision dates returned by `useGetPlannedRevisionDates` (i.e., the denominator matches the number of planned revision sessions shown, excluding the initial \"Study Date\").",
-        "The completed count uses the existing subtopic data (e.g., `subTopic.currentIntervalIndex`) and is capped to the total planned revisions so the UI never displays values like \"6/5\"."
+        "Calendar view no longer displays a 'reviews needing action' count or badge.",
+        "Clicking a date in the calendar shows only the topics/subtopics scheduled for revision on that date.",
+        "The date detail panel does not show overdue carry-over items or due/pending counts."
       ]
     },
     {
-      "id": "REQ-12",
-      "text": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
-      "target": "frontend",
+      "id": "REQ-14",
+      "text": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-user-latest"
         ],
         "quotes": [
-          "if I complete the revision according to schedule or later show in green if not in read"
+          "whenever I click a subtopic and view schedule add an option to redo revision next day if not done on particular day so accordingly modify the future dates"
         ]
       },
       "acceptanceCriteria": [
-        "For a subtopic with some completed revisions, the earliest N revision sessions (where N is the completed revision count) are styled as completed (green).",
-        "For any revision session with a date before today that is not yet completed, the session is styled as not completed/overdue (red).",
-        "Sessions on today or in the future that are not completed are not red; they remain neutral (or use existing today/upcoming styling) and do not appear as completed.",
-        "All new/updated user-visible labels (e.g., \"Completed\", \"Overdue\", \"Progress\") are in English."
+        "SubTopicScheduleView displays a 'Redo revision tomorrow' button or similar option for missed (overdue, not completed) sessions.",
+        "Clicking the option triggers a backend call that sets nextReview to tomorrow's date and recalculates the subtopic's future scheduled revision dates.",
+        "The updated schedule is reflected immediately in the UI.",
+        "All user-facing text is in English."
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "text": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-user-latest"
+        ],
+        "quotes": [
+          "add an option to redo revision next day if not done on particular day so accordingly modify the future dates"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend provides a method to reschedule a subtopic's nextReview to tomorrow.",
+        "The method recalculates all future revision dates starting from tomorrow using the subtopic's interval schedule.",
+        "The method returns the updated schedule or subtopic state.",
+        "Access control ensures only the owner (or admin) can reschedule."
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "text": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-latest"
+        ],
+        "quotes": [
+          "Dashboard should show things to be revised today and things which are due or missed previous day"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Dashboard (TodayView) displays subtopics scheduled for today separately from overdue/missed subtopics.",
+        "Each group is labeled appropriately (e.g., 'Due Today' and 'Overdue/Missed').",
+        "The combined count reflects all items needing attention (today + overdue).",
+        "All user-facing text is in English."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under `frontend/src/components/ui` (compose existing UI components instead).",
-    "Do not modify any frontend files listed in `frontend.immutablePaths` in SYSTEM_CONTEXT.",
-    "Keep all user-facing text in English.",
-    "Backend must remain a single Motoko actor in `backend/main.mo`; only introduce migrations if state schema changes (not expected for this request)."
+    "Do not change frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Respect the single-actor architecture; all Motoko logic remains in backend/main.mo.",
+    "Use existing backend methods and query patterns; do not introduce new state types unless necessary."
   ],
   "nonGoals": [
-    "Do not add new authentication methods (Internet Identity remains the only auth).",
-    "Do not introduce new backend services or external databases.",
-    "Do not change the calendar logic or today-dashboard due/overdue definitions as part of this request (only the subtopic schedule dialog presentation)."
+    "Do not change the overall spaced-repetition algorithm or interval logic.",
+    "Do not alter the Topics or Settings views.",
+    "Do not modify authentication or profile setup flows."
   ],
   "imageRequirements": {
     "required": [],

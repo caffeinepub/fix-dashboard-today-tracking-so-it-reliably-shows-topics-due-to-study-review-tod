@@ -1,45 +1,76 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T10:22:57.601Z",
+  "generatedAt": "2026-02-18T17:18:03.105Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-11",
-        "summary": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
+        "id": "REQ-13",
+        "summary": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx"
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/utils/reviewStatus.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx"
+          "frontend/src/components/CalendarView.tsx"
         ]
       },
       {
-        "id": "REQ-12",
-        "summary": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
+        "id": "REQ-14",
+        "summary": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx"
+          "frontend/src/components/SubTopicScheduleView.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-15",
+        "summary": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-16",
+        "summary": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/TodayView.tsx",
+          "frontend/src/utils/reviewStatus.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/TodayView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/SubTopicScheduleView.tsx",
+    "frontend/src/components/TodayView.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

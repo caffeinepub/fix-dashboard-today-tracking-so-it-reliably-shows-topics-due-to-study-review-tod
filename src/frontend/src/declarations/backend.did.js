@@ -49,6 +49,11 @@ export const SubTopic = IDL.Record({
   'mainTopicTitle' : IDL.Text,
   'mainTopicId' : UUID,
 });
+export const RevisionResult = IDL.Record({
+  'message' : IDL.Text,
+  'updatedSchedule' : IDL.Opt(RevisionSchedule),
+  'success' : IDL.Bool,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -137,6 +142,7 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'markSubTopicCompleted' : IDL.Func([UUID], [], []),
   'markSubTopicPending' : IDL.Func([UUID], [], []),
+  'rescheduleRevisionToNextDay' : IDL.Func([UUID], [RevisionResult], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'scheduleNextReview' : IDL.Func([UUID, IDL.Nat], [], []),
   'setUserSettings' : IDL.Func(
@@ -197,6 +203,11 @@ export const idlFactory = ({ IDL }) => {
     'studyDate' : Time,
     'mainTopicTitle' : IDL.Text,
     'mainTopicId' : UUID,
+  });
+  const RevisionResult = IDL.Record({
+    'message' : IDL.Text,
+    'updatedSchedule' : IDL.Opt(RevisionSchedule),
+    'success' : IDL.Bool,
   });
   
   return IDL.Service({
@@ -294,6 +305,7 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'markSubTopicCompleted' : IDL.Func([UUID], [], []),
     'markSubTopicPending' : IDL.Func([UUID], [], []),
+    'rescheduleRevisionToNextDay' : IDL.Func([UUID], [RevisionResult], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'scheduleNextReview' : IDL.Func([UUID, IDL.Nat], [], []),
     'setUserSettings' : IDL.Func(

@@ -735,4 +735,71 @@ actor {
       }
     );
   };
+
+  public type RevisionResult = {
+    success : Bool;
+    message : Text;
+    updatedSchedule : ?RevisionSchedule;
+  };
+
+  /// Set a subtopic's next revision to tomorrow and recalculate all future intervals.
+  public shared ({ caller }) func rescheduleRevisionToNextDay(subTopicId : UUID) : async RevisionResult {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can reschedule revisions");
+    };
+
+    let currentTime = Time.now();
+    let dayLength : Int = 24 * 60 * 60 * 1_000_000_000 : Nat;
+
+    switch (subTopics.get(subTopicId)) {
+      case (null) {
+        {
+          success = false;
+          message = "Subtopic not found";
+          updatedSchedule = null;
+        };
+      };
+      case (?subTopic) {
+        if (subTopic.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          return {
+            success = false;
+            message = "Unauthorized: Can only reschedule your own subtopics";
+            updatedSchedule = null;
+          };
+        };
+
+        let intervals = switch (userSettings.get(caller)) {
+          case (null) { getDefaultIntervals(subTopic.difficulty) };
+          case (?settings) {
+            switch (subTopic.difficulty) {
+              case (#easy) { settings.easyIntervals };
+              case (#medium) { settings.mediumIntervals };
+              case (#hard) { settings.hardIntervals };
+            };
+          };
+        };
+
+        let newSchedule : RevisionSchedule = {
+          subTopicId;
+          owner = caller;
+          nextReview = currentTime + (1 : Int) * dayLength; // Tomorrow
+          intervalDays = if (intervals.size() > 0) { intervals[0] } else { 0 };
+          studyDate = subTopic.studyDate;
+        };
+
+        revisionSchedules.add(subTopicId, newSchedule);
+
+        let updatedSubTopic : SubTopic = {
+          subTopic with currentIntervalIndex = 0 // Reset to first interval
+        };
+        subTopics.add(subTopicId, updatedSubTopic);
+
+        {
+          success = true;
+          message = "Revision rescheduled to tomorrow and future intervals recalculated";
+          updatedSchedule = ?newSchedule;
+        };
+      };
+    };
+  };
 };

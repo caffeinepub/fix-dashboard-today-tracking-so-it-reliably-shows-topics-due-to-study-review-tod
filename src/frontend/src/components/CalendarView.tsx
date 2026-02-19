@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react';
-import { useGetAllPlannedRevisionDates, useGetSubTopics, useGetRevisionSchedule } from '../hooks/useQueries';
+import { useGetAllPlannedRevisionDates, useGetSubTopics } from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIconLucide, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIconLucide } from 'lucide-react';
 import { format } from 'date-fns';
 import { Difficulty } from '../backend';
 import { getDateKey, timeToDate } from '../utils/time';
-import { getDueReviewsForDate, getPlannedItemsForDate } from '../utils/reviewStatus';
 
 const difficultyColors = {
   [Difficulty.easy]: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
@@ -28,11 +27,10 @@ interface CalendarEvent {
 export default function CalendarView() {
   const { data: allPlannedDates, isLoading: datesLoading } = useGetAllPlannedRevisionDates();
   const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopics();
-  const { data: revisionSchedules, isLoading: schedulesLoading } = useGetRevisionSchedule();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const isLoading = datesLoading || subTopicsLoading || schedulesLoading;
+  const isLoading = datesLoading || subTopicsLoading;
 
   const calendarDays = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -145,21 +143,6 @@ export default function CalendarView() {
     compareDate.setHours(0, 0, 0, 0);
     return compareDate < today;
   };
-
-  // Compute planned items and due/pending reviews for selected date
-  const selectedDateData = useMemo(() => {
-    if (!selectedDate || !subTopics || !allPlannedDates || !revisionSchedules) {
-      return {
-        plannedItems: { studyItems: [], revisionItems: [], total: 0 },
-        dueReviews: { overdue: [], dueOnDate: [], total: 0 },
-      };
-    }
-
-    const plannedItems = getPlannedItemsForDate(selectedDate, subTopics, allPlannedDates);
-    const dueReviews = getDueReviewsForDate(selectedDate, subTopics, revisionSchedules);
-
-    return { plannedItems, dueReviews };
-  }, [selectedDate, subTopics, allPlannedDates, revisionSchedules]);
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
   const selectedDateIsToday = selectedDate ? isToday(selectedDate) : false;
@@ -275,123 +258,45 @@ export default function CalendarView() {
                 No scheduled items for this date
               </p>
             ) : (
-              <div className="space-y-6">
-                {/* Planned Items Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold">Planned Items</h4>
-                    <Badge variant="secondary" className="text-xs">
-                      {selectedDateData.plannedItems.total}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Study sessions and scheduled revision dates
-                  </p>
-                  <div className="space-y-2">
-                    {selectedDateEvents.map((event, idx) => {
-                      const subTopic = getSubTopicById(event.subTopicId);
-                      if (!subTopic) return null;
-                      
-                      return (
-                        <div
-                          key={`${event.subTopicId}-${idx}`}
-                          className="p-3 rounded-lg border bg-card text-card-foreground"
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
-                            <Badge variant="outline" className={`${difficultyColors[event.difficulty]} text-xs shrink-0`}>
-                              {event.difficulty}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {event.type === 'study' ? 'Study' : 'Revision'}
-                            </Badge>
-                            {subTopic.completed && (
-                              <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400">
-                                Completed
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Topics to Review</h4>
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedDateEvents.length}
+                  </Badge>
                 </div>
-
-                {/* Due/Pending Reviews Section */}
-                <div className="space-y-3 pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      {selectedDateData.dueReviews.total > 0 && (
-                        <AlertCircle className="h-4 w-4 text-destructive" />
-                      )}
-                      Reviews Needing Action
-                    </h4>
-                    <Badge 
-                      variant={selectedDateData.dueReviews.total > 0 ? "destructive" : "secondary"} 
-                      className="text-xs"
-                    >
-                      {selectedDateData.dueReviews.total}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Subtopics due for review (excludes completed)
-                  </p>
-                  {selectedDateData.dueReviews.total === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">
-                      No pending reviews for this date
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {selectedDateData.dueReviews.overdue.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-destructive">
-                            Overdue ({selectedDateData.dueReviews.overdue.length})
-                          </p>
-                          {selectedDateData.dueReviews.overdue.map((subTopic) => (
-                            <div
-                              key={`overdue-${subTopic.id}`}
-                              className="p-3 rounded-lg border border-destructive/50 bg-destructive/5"
-                            >
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
-                                <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs shrink-0`}>
-                                  {subTopic.difficulty}
-                                </Badge>
-                              </div>
-                              <Badge variant="destructive" className="text-xs">
-                                Overdue
-                              </Badge>
-                            </div>
-                          ))}
+                <p className="text-xs text-muted-foreground">
+                  Study sessions and scheduled revision dates
+                </p>
+                <div className="space-y-2">
+                  {selectedDateEvents.map((event, idx) => {
+                    const subTopic = getSubTopicById(event.subTopicId);
+                    if (!subTopic) return null;
+                    
+                    return (
+                      <div
+                        key={`${event.subTopicId}-${idx}`}
+                        className="p-3 rounded-lg border bg-card text-card-foreground"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
+                          <Badge variant="outline" className={`${difficultyColors[event.difficulty]} text-xs shrink-0`}>
+                            {event.difficulty}
+                          </Badge>
                         </div>
-                      )}
-                      {selectedDateData.dueReviews.dueOnDate.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-primary">
-                            Due on this date ({selectedDateData.dueReviews.dueOnDate.length})
-                          </p>
-                          {selectedDateData.dueReviews.dueOnDate.map((subTopic) => (
-                            <div
-                              key={`due-${subTopic.id}`}
-                              className="p-3 rounded-lg border border-primary/50 bg-primary/5"
-                            >
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <p className="text-sm font-medium line-clamp-1">{subTopic.title}</p>
-                                <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs shrink-0`}>
-                                  {subTopic.difficulty}
-                                </Badge>
-                              </div>
-                              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                                Due {selectedDateIsToday ? 'Today' : 'on this date'}
-                              </Badge>
-                            </div>
-                          ))}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {event.type === 'study' ? 'Study' : 'Revision'}
+                          </Badge>
+                          {subTopic.completed && (
+                            <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400">
+                              Completed
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

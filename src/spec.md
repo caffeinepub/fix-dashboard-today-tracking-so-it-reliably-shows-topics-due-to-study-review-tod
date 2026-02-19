@@ -1,10 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Show revision completion progress and per-session completion/overdue status in the Subtopic Schedule dialog.
+**Goal:** Simplify the calendar view, add a redo-next-day option for missed revisions, and show both today's and overdue items in the dashboard.
 
 **Planned changes:**
-- Update `frontend/src/components/SubTopicScheduleView.tsx` to display a progress indicator for the subtopic’s revisions completed out of total planned revisions (denominator based on the existing planned revision sessions, excluding the initial “Study Date”; completed count capped to the total).
-- Update the schedule list styling in `frontend/src/components/SubTopicScheduleView.tsx` to visually indicate session status: completed sessions in green, overdue (past date and not completed) sessions in red, and today/upcoming uncompleted sessions in a neutral style, with any labels in English.
+- Remove the "reviews needing action" indicator from the calendar view; clicking a date will show only topics scheduled for that day
+- Add a "redo revision tomorrow" button in the subtopic schedule view that reschedules missed revisions to the next day and recalculates future dates
+- Update the dashboard to display two distinct groups: topics due today and overdue/missed topics from previous days
 
-**User-visible outcome:** When viewing a subtopic’s schedule, users see how many revisions they’ve completed out of the total (e.g., “4/5” or “1/5 remaining”) and can quickly identify which scheduled sessions are completed (green), overdue (red), or upcoming (neutral).
+**User-visible outcome:** Users can view cleaner calendar dates with only scheduled topics, easily reschedule missed revisions to tomorrow with one click, and see a clear separation between today's reviews and overdue items on the dashboard.

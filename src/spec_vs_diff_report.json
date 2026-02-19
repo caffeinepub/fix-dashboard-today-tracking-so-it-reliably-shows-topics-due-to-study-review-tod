@@ -1,31 +1,18 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T10:22:57.598Z",
-  "summary": "The diff shows new computations for revision progress (total/completed/remaining) and per-session status flags (completed/overdue/today/future) in `SubTopicScheduleView.tsx`, but the provided snippet is truncated before any JSX that actually renders the progress indicator or applies green/red/neutral styling to the schedule list items. Based on the available evidence, the requested UI outcomes cannot be fully verified as implemented.",
-  "missing_requirements": [
-    {
-      "id": "REQ-11",
-      "requirement": "Display a progress indicator in the Subtopic revision schedule dialog showing completed revisions out of total planned revisions (denominator matches planned revision sessions excluding Study Date; completed count capped).",
-      "reason": "While progress metrics are computed (`totalRevisions`, `completedRevisions` capped, `remainingRevisions`), the diff excerpt is truncated before any JSX that renders a visible progress indicator (e.g., \"Progress: 4/5\" or \"1/5 remaining\"). Therefore implementation of the user-facing indicator cannot be confirmed from the provided diff.",
-      "evidence": [
-        "frontend/src/components/SubTopicScheduleView.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "requirement": "Visually indicate each scheduled session’s completion status in the schedule list: completed sessions in green, past uncompleted sessions in red, upcoming/today neutral; English labels if shown.",
-      "reason": "The code computes flags (`isCompleted`, `isOverdue`) per date item, but the diff excerpt is truncated before the schedule list rendering where these flags would be mapped to green/red/neutral styles and any English status labels/badges. Therefore the required visual indication cannot be verified from the provided diff.",
-      "evidence": [
-        "frontend/src/components/SubTopicScheduleView.tsx (truncated)"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-18T17:18:03.102Z",
+  "summary": "The diff implements all four requirements: REQ-13 removes 'reviews needing action' from CalendarView, REQ-14 adds a 'Redo revision tomorrow' button in SubTopicScheduleView, REQ-15 introduces a backend rescheduleRevisionToNextDay method, and REQ-16 updates TodayView to separately display 'Due Today' and 'Overdue/Missed' groups.",
+  "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.62,
+  "confidence": 0.95,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
+    "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/SubTopicScheduleView.tsx",
+    "frontend/src/components/TodayView.tsx",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]
 }

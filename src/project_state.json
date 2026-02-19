@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 11,
+  "projectStateVersion": 13,
   "summary": "Study/revision scheduling app with calendar and a main dashboard that should show the topic to study today.",
   "architectural_notes": [
     "Today dashboard should surface overdue/carry-over items across days, while the calendar should reflect only the original scheduled date (no duplication on subsequent days)."
@@ -76,6 +76,30 @@
         "REQ-12"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-in-calendarview-frontend-src-components-calendarview-tsx-remove-the-reviews-needing-action-indicator-count-and-display-only-the-topics-scheduled-to-be-revised-when-the-user-clicks-on-a-particular-date",
+      "title": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-subtopicscheduleview-frontend-src-components-subtopicscheduleview-tsx-add-a-user-action-button-or-link-to-reschedule-a-missed-revision-to-the-next-day-when-activated-update-the-subtopic-s-nextreview-date-to-tomorrow-and-recalculate-all-future-revision-dates-accordingly-by-calling-the-backend",
+      "title": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-todayview-frontend-src-components-todayview-tsx-so-the-dashboard-shows-both-a-topics-to-be-revised-today-subtopics-with-nextreview-matching-the-selected-date-and-b-topics-that-are-due-or-missed-from-previous-days-overdue-carry-over-clearly-distinguish-these-two-groups-in-the-ui",
+      "title": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -133,6 +157,32 @@
       "id": "AR-8",
       "summary": "Enhance the subtopic revision schedule view to show completion status and progress count.\n- In the revision schedule for a selected subtopic, visually indicate sessions completed on-time or late (e.g., show in green) and not completed/overdue (e.g., show in red).\n- Display a progress indicator showing how many revisions have been completed out of the total planned (e.g., 4/5 completed or 1/5 remaining).",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "In calendar view, remove the 'reviews needing action' indicator/count and show only the topics scheduled to be revised on the selected date.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "In the subtopic revision schedule dialog, add an option to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Dashboard should show both (a) topics to be revised today and (b) topics that were due or missed on previous days (overdue/carry-over).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
+      "reqIds": [
+        "REQ-15"
+      ],
       "status": "pending"
     }
   ],

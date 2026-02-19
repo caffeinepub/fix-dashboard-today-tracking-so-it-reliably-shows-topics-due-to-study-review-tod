@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { useGetPlannedRevisionDates } from '../hooks/useQueries';
+import { useGetPlannedRevisionDates, useRescheduleRevisionToNextDay } from '../hooks/useQueries';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Calendar, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
 import { format, isBefore, isToday, isFuture, startOfDay } from 'date-fns';
 import type { SubTopic } from '../backend';
 
@@ -21,6 +22,7 @@ const difficultyColors = {
 
 export default function SubTopicScheduleView({ open, onOpenChange, subTopic }: SubTopicScheduleViewProps) {
   const { data: plannedDates, isLoading } = useGetPlannedRevisionDates(subTopic?.id || null);
+  const rescheduleToNextDay = useRescheduleRevisionToNextDay();
 
   const studyDate = useMemo(() => {
     if (!subTopic) return null;
@@ -72,6 +74,21 @@ export default function SubTopicScheduleView({ open, onOpenChange, subTopic }: S
     });
   }, [plannedDates, studyDate, progressMetrics]);
 
+  // Check if subtopic is overdue (has any overdue revision)
+  const isOverdue = useMemo(() => {
+    return revisionDates.some(r => r.isOverdue);
+  }, [revisionDates]);
+
+  const handleRedoTomorrow = async () => {
+    if (!subTopic) return;
+    
+    try {
+      await rescheduleToNextDay.mutateAsync(subTopic.id);
+    } catch (error) {
+      console.error('Failed to reschedule:', error);
+    }
+  };
+
   if (!subTopic) return null;
 
   return (
@@ -99,7 +116,42 @@ export default function SubTopicScheduleView({ open, onOpenChange, subTopic }: S
           </div>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
+          {/* Redo Tomorrow Button */}
+          {isOverdue && !subTopic.completed && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm mb-1">Missed Revision</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      This subtopic has overdue revisions. You can reschedule to start fresh tomorrow.
+                    </p>
+                    <Button
+                      onClick={handleRedoTomorrow}
+                      disabled={rescheduleToNextDay.isPending}
+                      size="sm"
+                      variant="default"
+                    >
+                      {rescheduleToNextDay.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Rescheduling...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Redo Revision Tomorrow
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">

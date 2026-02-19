@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-subtopic-revision-schedule-dialog-frontend-src-components-subtopicscheduleview-tsx-to-display-a-progress-indicator-showing-how-many-revisions-have-been-completed-out-of-the-total-planned-revisions-for-that-subtopic-e-g-4-5-and-or-1-5-remaining-use-english-for-any-user-facing-text",
-      "featureTitle": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
+      "featureId": "feature-in-calendarview-frontend-src-components-calendarview-tsx-remove-the-reviews-needing-action-indicator-count-and-display-only-the-topics-scheduled-to-be-revised-when-the-user-clicks-on-a-particular-date",
+      "featureTitle": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
       "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx"
+        "frontend/src/components/CalendarView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -16,15 +16,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-11"
+        "REQ-13"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-the-subtopic-revision-schedule-list-frontend-src-components-subtopicscheduleview-tsx-visually-indicate-each-scheduled-session-s-completion-status-show-completed-sessions-in-green-completed-on-the-scheduled-date-or-later-and-show-past-sessions-that-are-not-completed-in-red-keep-upcoming-sessions-in-a-neutral-style-use-english-for-any-status-labels-badges",
-      "featureTitle": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
+      "featureId": "feature-in-subtopicscheduleview-frontend-src-components-subtopicscheduleview-tsx-add-a-user-action-button-or-link-to-reschedule-a-missed-revision-to-the-next-day-when-activated-update-the-subtopic-s-nextreview-date-to-tomorrow-and-recalculate-all-future-revision-dates-accordingly-by-calling-the-backend",
+      "featureTitle": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
       "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx"
+        "frontend/src/components/SubTopicScheduleView.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -35,7 +36,26 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-14"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-todayview-frontend-src-components-todayview-tsx-so-the-dashboard-shows-both-a-topics-to-be-revised-today-subtopics-with-nextreview-matching-the-selected-date-and-b-topics-that-are-due-or-missed-from-previous-days-overdue-carry-over-clearly-distinguish-these-two-groups-in-the-ui",
+      "featureTitle": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+      "files": [
+        "frontend/src/components/TodayView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-16"
       ],
       "confidence": "high"
     }
