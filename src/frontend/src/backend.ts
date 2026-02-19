@@ -114,6 +114,7 @@ export interface SubTopic {
 }
 export interface RevisionSchedule {
     owner: Principal;
+    isReviewed: boolean;
     subTopicId: UUID;
     intervalDays: bigint;
     studyDate: Time;
@@ -178,11 +179,9 @@ export interface backendInterface {
         hardIntervals: Array<bigint>;
     } | null>;
     isCallerAdmin(): Promise<boolean>;
+    markRevisionAsReviewed(subTopicId: UUID): Promise<void>;
     markSubTopicCompleted(id: UUID): Promise<void>;
     markSubTopicPending(id: UUID): Promise<void>;
-    /**
-     * / Set a subtopic's next revision to tomorrow and recalculate all future intervals.
-     */
     rescheduleRevisionToNextDay(subTopicId: UUID): Promise<RevisionResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     scheduleNextReview(subTopicId: UUID, days: bigint): Promise<void>;
@@ -531,6 +530,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async markRevisionAsReviewed(arg0: UUID): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markRevisionAsReviewed(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markRevisionAsReviewed(arg0);
             return result;
         }
     }

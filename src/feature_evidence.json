@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-calendarview-frontend-src-components-calendarview-tsx-remove-the-reviews-needing-action-indicator-count-and-display-only-the-topics-scheduled-to-be-revised-when-the-user-clicks-on-a-particular-date",
-      "featureTitle": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
+      "featureId": "feature-add-visual-indicators-in-the-calendar-view-to-show-missed-revisions-in-red-for-dates-where-scheduled-revisions-were-not-marked-as-reviewed",
+      "featureTitle": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
       "files": [
-        "frontend/src/components/CalendarView.tsx"
+        "frontend/src/components/CalendarView.tsx",
+        "frontend/src/utils/reviewStatus.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -16,15 +17,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-13"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-subtopicscheduleview-frontend-src-components-subtopicscheduleview-tsx-add-a-user-action-button-or-link-to-reschedule-a-missed-revision-to-the-next-day-when-activated-update-the-subtopic-s-nextreview-date-to-tomorrow-and-recalculate-all-future-revision-dates-accordingly-by-calling-the-backend",
-      "featureTitle": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
+      "featureId": "feature-add-mark-as-reviewed-action-button-in-the-todayview-dashboard-that-allows-users-to-complete-revisions-for-subtopics-due-on-the-selected-date",
+      "featureTitle": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
       "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx",
+        "frontend/src/components/TodayView.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -36,14 +37,34 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-14"
+        "REQ-3"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-todayview-frontend-src-components-todayview-tsx-so-the-dashboard-shows-both-a-topics-to-be-revised-today-subtopics-with-nextreview-matching-the-selected-date-and-b-topics-that-are-due-or-missed-from-previous-days-overdue-carry-over-clearly-distinguish-these-two-groups-in-the-ui",
-      "featureTitle": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+      "featureId": "feature-add-mark-as-reviewed-action-button-in-the-subtopicscheduleview-calendar-dialog-that-allows-users-to-complete-revisions-when-viewing-a-subtopic-s-schedule-from-the-calendar",
+      "featureTitle": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
       "files": [
+        "frontend/src/components/SubTopicScheduleView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-that-when-a-missed-revision-is-marked-as-reviewed-after-its-scheduled-date-it-transitions-from-red-missed-to-completed-status-in-all-views",
+      "featureTitle": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
+      "files": [
+        "frontend/src/components/CalendarView.tsx",
         "frontend/src/components/TodayView.tsx"
       ],
       "components": [
@@ -55,7 +76,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-16"
+        "REQ-5"
       ],
       "confidence": "high"
     }

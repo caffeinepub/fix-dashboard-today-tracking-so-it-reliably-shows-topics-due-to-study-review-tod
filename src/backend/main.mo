@@ -11,7 +11,9 @@ import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -54,6 +56,7 @@ actor {
     nextReview : Time.Time;
     intervalDays : Nat;
     studyDate : Time.Time;
+    isReviewed : Bool;
   };
 
   type UserSettings = {
@@ -224,6 +227,7 @@ actor {
           nextReview = studyDate;
           intervalDays = 0;
           studyDate;
+          isReviewed = false;
         };
         revisionSchedules.add(id, initialRevision);
 
@@ -414,7 +418,6 @@ actor {
     let now = Time.now();
     let isAdmin = AccessControl.isAdmin(accessControlState, caller);
 
-    // Find all subtopics with nextReview date <= today (or own studyDate for unscheduled)
     let dueTodayIds = revisionSchedules.values().toArray().filter(
       func(schedule : RevisionSchedule) : Bool {
         let isOverdue = schedule.nextReview <= now;
@@ -427,7 +430,6 @@ actor {
       }
     );
 
-    // Convert IDs to subtopics, filtering to valid ones only
     let dueToday = dueTodayIds.values().map(
       func(id) {
         switch (subTopics.get(id)) {
@@ -439,7 +441,6 @@ actor {
       }
     );
 
-    // Sort for consistent display order by nextReview (when available)
     dueToday.toArray().filterMap(func(x) { x }).sort(
       func(a, b) {
         let aSchedule = revisionSchedules.get(a.id);
@@ -457,7 +458,6 @@ actor {
     };
     let isAdmin = AccessControl.isAdmin(accessControlState, caller);
 
-    // Find all subtopics with nextReview date <= targetDate (including overdue ones)
     let dueIds = revisionSchedules.values().toArray().filter(
       func(schedule : RevisionSchedule) : Bool {
         let isDue = schedule.nextReview <= targetDate;
@@ -470,7 +470,6 @@ actor {
       }
     );
 
-    // Convert IDs to subtopics, filtering to valid ones only
     let dueTopics = dueIds.values().map(
       func(id) {
         switch (subTopics.get(id)) {
@@ -482,7 +481,6 @@ actor {
       }
     );
 
-    // Sort for consistent display order by nextReview (when available)
     dueTopics.toArray().filterMap(func(x) { x }).sort(
       func(a, b) {
         let aSchedule = revisionSchedules.get(a.id);
@@ -547,9 +545,28 @@ actor {
           nextReview = Time.now() + (intervalDays : Int) * dayLength;
           intervalDays;
           studyDate = subTopic.studyDate;
+          isReviewed = false;
         };
         revisionSchedules.add(subTopicId, schedule);
         schedule;
+      };
+    };
+  };
+
+  public shared ({ caller }) func markRevisionAsReviewed(subTopicId : UUID) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark revisions as reviewed");
+    };
+    switch (revisionSchedules.get(subTopicId)) {
+      case (null) { Runtime.trap("Revision schedule not found") };
+      case (?schedule) {
+        if (schedule.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only mark your own revisions as reviewed");
+        };
+        let updatedSchedule : RevisionSchedule = {
+          schedule with isReviewed = true;
+        };
+        revisionSchedules.add(subTopicId, updatedSchedule);
       };
     };
   };
@@ -585,6 +602,7 @@ actor {
           nextReview = Time.now() + (days : Int) * (24 * 60 * 60 * 1_000_000_000 : Nat);
           intervalDays = days;
           studyDate = subTopic.studyDate;
+          isReviewed = false;
         };
         revisionSchedules.add(subTopicId, schedule);
       };
@@ -682,7 +700,6 @@ actor {
     };
   };
 
-  // CALENDAR VIEW: Return all planned revision dates for all subtopics
   public query ({ caller }) func getAllPlannedRevisionDates() : async [{
     subTopicId : UUID;
     owner : Principal;
@@ -742,7 +759,6 @@ actor {
     updatedSchedule : ?RevisionSchedule;
   };
 
-  /// Set a subtopic's next revision to tomorrow and recalculate all future intervals.
   public shared ({ caller }) func rescheduleRevisionToNextDay(subTopicId : UUID) : async RevisionResult {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can reschedule revisions");
@@ -782,15 +798,16 @@ actor {
         let newSchedule : RevisionSchedule = {
           subTopicId;
           owner = caller;
-          nextReview = currentTime + (1 : Int) * dayLength; // Tomorrow
+          nextReview = currentTime + (1 : Int) * dayLength;
           intervalDays = if (intervals.size() > 0) { intervals[0] } else { 0 };
           studyDate = subTopic.studyDate;
+          isReviewed = false;
         };
 
         revisionSchedules.add(subTopicId, newSchedule);
 
         let updatedSubTopic : SubTopic = {
-          subTopic with currentIntervalIndex = 0 // Reset to first interval
+          subTopic with currentIntervalIndex = 0;
         };
         subTopics.add(subTopicId, updatedSubTopic);
 

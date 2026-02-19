@@ -23,17 +23,14 @@ const difficultyColors = {
 
 export default function TopicDetailView({ open, onOpenChange, mainTopic }: TopicDetailViewProps) {
   const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopicsByMainTopic(mainTopic?.id || null);
-  const [scheduleViewOpen, setScheduleViewOpen] = useState(false);
-  const [viewingSubTopic, setViewingSubTopic] = useState<SubTopic | null>(null);
+  const [viewingSubTopicId, setViewingSubTopicId] = useState<bigint | null>(null);
 
   const handleViewSchedule = (subTopic: SubTopic) => {
-    setViewingSubTopic(subTopic);
-    setScheduleViewOpen(true);
+    setViewingSubTopicId(subTopic.id);
   };
 
   const handleScheduleViewClose = () => {
-    setScheduleViewOpen(false);
-    setViewingSubTopic(null);
+    setViewingSubTopicId(null);
   };
 
   if (!mainTopic) return null;
@@ -165,11 +162,12 @@ export default function TopicDetailView({ open, onOpenChange, mainTopic }: Topic
         </DialogContent>
       </Dialog>
 
-      <SubTopicScheduleView
-        open={scheduleViewOpen}
-        onOpenChange={handleScheduleViewClose}
-        subTopic={viewingSubTopic}
-      />
+      {viewingSubTopicId && (
+        <SubTopicScheduleView
+          subTopicId={viewingSubTopicId}
+          onClose={handleScheduleViewClose}
+        />
+      )}
     </>
   );
 }

@@ -1,253 +1,263 @@
 import { useMemo } from 'react';
-import { useGetPlannedRevisionDates, useRescheduleRevisionToNextDay } from '../hooks/useQueries';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useGetSubTopics, useGetRevisionSchedule, useGetPlannedRevisionDates, useRescheduleRevisionToNextDay, useMarkRevisionAsReviewed } from '../hooks/useQueries';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
-import { format, isBefore, isToday, isFuture, startOfDay } from 'date-fns';
-import type { SubTopic } from '../backend';
-
-interface SubTopicScheduleViewProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  subTopic: SubTopic | null;
-}
+import { Calendar, CheckCircle2, Circle, Loader2, AlertCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { Difficulty } from '../backend';
+import { timeToDate } from '../utils/time';
 
 const difficultyColors = {
-  easy: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
-  medium: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
-  hard: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
+  [Difficulty.easy]: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+  [Difficulty.medium]: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
+  [Difficulty.hard]: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
 };
 
-export default function SubTopicScheduleView({ open, onOpenChange, subTopic }: SubTopicScheduleViewProps) {
-  const { data: plannedDates, isLoading } = useGetPlannedRevisionDates(subTopic?.id || null);
-  const rescheduleToNextDay = useRescheduleRevisionToNextDay();
+interface SubTopicScheduleViewProps {
+  subTopicId: bigint;
+  onClose: () => void;
+}
 
-  const studyDate = useMemo(() => {
-    if (!subTopic) return null;
-    return new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
-  }, [subTopic]);
+export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicScheduleViewProps) {
+  const { data: subTopics } = useGetSubTopics();
+  const { data: revisionSchedules } = useGetRevisionSchedule();
+  const { data: plannedDates } = useGetPlannedRevisionDates(subTopicId);
+  const rescheduleRevision = useRescheduleRevisionToNextDay();
+  const markAsReviewed = useMarkRevisionAsReviewed();
 
-  // Calculate progress metrics
-  const progressMetrics = useMemo(() => {
-    if (!subTopic || !plannedDates) return null;
-    
-    const totalRevisions = plannedDates.length; // Excludes study date
-    const completedRevisions = Math.min(Number(subTopic.currentIntervalIndex), totalRevisions);
-    const remainingRevisions = totalRevisions - completedRevisions;
-    
+  const subtopic = useMemo(() => {
+    return subTopics?.find((st) => st.id === subTopicId);
+  }, [subTopics, subTopicId]);
+
+  const currentSchedule = useMemo(() => {
+    return revisionSchedules?.find((rs) => rs.subTopicId === subTopicId);
+  }, [revisionSchedules, subTopicId]);
+
+  const scheduleData = useMemo(() => {
+    if (!subtopic || !plannedDates || !currentSchedule) return null;
+
+    const now = new Date();
+    const studyDate = timeToDate(subtopic.studyDate);
+    const nextReviewDate = timeToDate(currentSchedule.nextReview);
+
+    // Check if current revision is overdue and not reviewed
+    const isOverdue = nextReviewDate < now && !currentSchedule.isReviewed;
+
+    // Count completed and remaining revisions
+    const allDates = [studyDate, ...plannedDates.map(timeToDate)];
+    const completedCount = currentSchedule.isReviewed ? allDates.findIndex(d => d.getTime() === nextReviewDate.getTime()) + 1 : 0;
+    const remainingCount = allDates.length - completedCount;
+
     return {
-      total: totalRevisions,
-      completed: completedRevisions,
-      remaining: remainingRevisions,
+      studyDate,
+      plannedDates: plannedDates.map(timeToDate),
+      nextReviewDate,
+      isOverdue,
+      isReviewed: currentSchedule.isReviewed,
+      completedCount,
+      remainingCount,
+      totalCount: allDates.length,
     };
-  }, [subTopic, plannedDates]);
+  }, [subtopic, plannedDates, currentSchedule]);
 
-  const revisionDates = useMemo(() => {
-    if (!plannedDates || !studyDate || !progressMetrics) return [];
-    
-    const today = startOfDay(new Date());
-    const allDates = [studyDate, ...plannedDates.map(d => new Date(Number(d / BigInt(1_000_000))))];
-    
-    return allDates.map((date, index) => {
-      const isStudyDate = index === 0;
-      const revisionIndex = index - 1; // -1 for study date, 0+ for revisions
-      
-      // Determine completion status for revision items (not study date)
-      const isCompleted = !isStudyDate && revisionIndex < progressMetrics.completed;
-      
-      // Determine if overdue (past date and not completed)
-      const isPastDate = isBefore(date, today) && !isToday(date);
-      const isOverdue = !isStudyDate && isPastDate && !isCompleted;
-      
-      return {
-        date,
-        label: isStudyDate ? 'Study Date' : `Revision ${revisionIndex + 1}`,
-        isStudyDate,
-        isCompleted,
-        isOverdue,
-        isPast: isPastDate,
-        isToday: isToday(date),
-        isFuture: isFuture(date) && !isToday(date),
-      };
-    });
-  }, [plannedDates, studyDate, progressMetrics]);
-
-  // Check if subtopic is overdue (has any overdue revision)
-  const isOverdue = useMemo(() => {
-    return revisionDates.some(r => r.isOverdue);
-  }, [revisionDates]);
-
-  const handleRedoTomorrow = async () => {
-    if (!subTopic) return;
-    
-    try {
-      await rescheduleToNextDay.mutateAsync(subTopic.id);
-    } catch (error) {
-      console.error('Failed to reschedule:', error);
-    }
+  const handleReschedule = async () => {
+    await rescheduleRevision.mutateAsync(subTopicId);
   };
 
-  if (!subTopic) return null;
+  const handleMarkAsReviewed = async () => {
+    await markAsReviewed.mutateAsync(subTopicId);
+  };
+
+  if (!subtopic || !scheduleData) {
+    return null;
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl">{subTopic.title}</DialogTitle>
-              <DialogDescription className="mt-2">{subTopic.description}</DialogDescription>
-              <div className="flex items-center gap-2 mt-3">
-                <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                  {subTopic.difficulty}
-                </Badge>
-                {subTopic.completed && (
-                  <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                    Completed
-                  </Badge>
-                )}
-                <span className="text-sm text-muted-foreground">
-                  from {subTopic.mainTopicTitle}
-                </span>
-              </div>
-            </div>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <span>{subtopic.title}</span>
+            <Badge variant="outline" className={difficultyColors[subtopic.difficulty]}>
+              {subtopic.difficulty}
+            </Badge>
+          </DialogTitle>
+          <DialogDescription>{subtopic.mainTopicTitle}</DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 space-y-4">
-          {/* Redo Tomorrow Button */}
-          {isOverdue && !subTopic.completed && (
-            <Card className="border-primary/50 bg-primary/5">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-sm mb-1">Missed Revision</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      This subtopic has overdue revisions. You can reschedule to start fresh tomorrow.
-                    </p>
+        <div className="space-y-6">
+          {/* Progress Summary */}
+          <div className="p-4 rounded-lg bg-muted/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Revision Progress</span>
+              <span className="text-sm text-muted-foreground">
+                {scheduleData.completedCount} / {scheduleData.totalCount} completed
+              </span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${(scheduleData.completedCount / scheduleData.totalCount) * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {scheduleData.remainingCount} revision{scheduleData.remainingCount !== 1 ? 's' : ''} remaining
+            </p>
+          </div>
+
+          {/* Current Status */}
+          {scheduleData.isOverdue && !scheduleData.isReviewed && (
+            <div className="p-4 rounded-lg border-destructive bg-destructive/10 border">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-destructive mb-1">Missed Revision</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    This revision was due on {format(scheduleData.nextReviewDate, 'MMMM d, yyyy')}
+                  </p>
+                  <div className="flex gap-2">
                     <Button
-                      onClick={handleRedoTomorrow}
-                      disabled={rescheduleToNextDay.isPending}
                       size="sm"
-                      variant="default"
+                      onClick={handleMarkAsReviewed}
+                      disabled={markAsReviewed.isPending}
                     >
-                      {rescheduleToNextDay.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Rescheduling...
-                        </>
+                      {markAsReviewed.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
                       ) : (
-                        <>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Redo Revision Tomorrow
-                        </>
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
                       )}
+                      Mark as Reviewed
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleReschedule}
+                      disabled={rescheduleRevision.isPending}
+                    >
+                      {rescheduleRevision.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <Calendar className="h-4 w-4 mr-1" />
+                      )}
+                      Redo Tomorrow
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Revision Schedule</h3>
-                </div>
-                {progressMetrics && progressMetrics.total > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Progress: {progressMetrics.completed}/{progressMetrics.total}
-                    </span>
-                    {progressMetrics.remaining > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {progressMetrics.remaining} remaining
-                      </Badge>
+          {!scheduleData.isReviewed && !scheduleData.isOverdue && (
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-start gap-3">
+                <Circle className="h-5 w-5 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-1">Next Revision</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Scheduled for {format(scheduleData.nextReviewDate, 'MMMM d, yyyy')}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleMarkAsReviewed}
+                    disabled={markAsReviewed.isPending}
+                  >
+                    {markAsReviewed.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
                     )}
+                    Mark as Reviewed
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {scheduleData.isReviewed && (
+            <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/20">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-green-700 dark:text-green-400 mb-1">Completed</h3>
+                  <p className="text-sm text-muted-foreground">
+                    This revision has been marked as reviewed
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Schedule Timeline */}
+          <div>
+            <h3 className="font-semibold mb-3">Revision Schedule</h3>
+            <div className="space-y-3">
+              {/* Study Date */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Study Date</span>
+                    <span className="text-sm text-muted-foreground">
+                      {format(scheduleData.studyDate, 'MMM d, yyyy')}
+                    </span>
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground mt-1">Initial study completed</p>
+                </div>
               </div>
 
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : revisionDates.length > 0 ? (
-                <div className="space-y-2">
-                  {revisionDates.map((revision, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center justify-between p-3 rounded-lg border text-sm ${
-                        revision.isCompleted
-                          ? 'bg-green-500/5 border-green-500/30'
-                          : revision.isOverdue
-                          ? 'bg-red-500/5 border-red-500/30'
-                          : revision.isPast
-                          ? 'bg-muted/50 opacity-60'
-                          : revision.isToday
-                          ? 'bg-primary/5 border-primary'
-                          : 'bg-background'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`h-2 w-2 rounded-full ${
-                          revision.isCompleted
-                            ? 'bg-green-500'
-                            : revision.isOverdue
-                            ? 'bg-red-500'
-                            : revision.isPast
-                            ? 'bg-muted-foreground'
-                            : revision.isToday
-                            ? 'bg-primary'
-                            : 'bg-blue-500'
-                        }`} />
-                        <div>
-                          <p className="font-medium">{revision.label}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(revision.date, 'EEEE, MMMM d, yyyy')}
-                          </p>
-                        </div>
+              {/* Planned Revisions */}
+              {scheduleData.plannedDates.map((date, index) => {
+                const isPast = date < new Date();
+                const isCurrent = date.getTime() === scheduleData.nextReviewDate.getTime();
+                const isCompleted = scheduleData.isReviewed && isCurrent;
+                const isMissed = isPast && !isCompleted && isCurrent;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 p-3 rounded-lg ${
+                      isMissed ? 'bg-destructive/10 border border-destructive' : 'bg-muted/50'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                    ) : isMissed ? (
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Revision {index + 1}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {format(date, 'MMM d, yyyy')}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {revision.isCompleted && (
-                          <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 text-xs">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Completed
-                          </Badge>
-                        )}
-                        {revision.isOverdue && (
-                          <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-xs">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Overdue
-                          </Badge>
-                        )}
-                        {!revision.isCompleted && !revision.isOverdue && revision.isPast && (
-                          <Badge variant="outline" className="text-xs">Past</Badge>
-                        )}
-                        {revision.isToday && !revision.isCompleted && (
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                            Today
-                          </Badge>
-                        )}
-                        {revision.isFuture && !revision.isCompleted && (
-                          <Badge variant="outline" className="text-xs">Upcoming</Badge>
-                        )}
-                      </div>
+                      {isMissed && (
+                        <p className="text-xs text-destructive mt-1">Missed - not yet reviewed</p>
+                      )}
+                      {isCompleted && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">Completed</p>
+                      )}
+                      {!isCurrent && !isCompleted && isPast && (
+                        <p className="text-xs text-muted-foreground mt-1">Scheduled</p>
+                      )}
+                      {!isPast && (
+                        <p className="text-xs text-muted-foreground mt-1">Upcoming</p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  No revision schedule available
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

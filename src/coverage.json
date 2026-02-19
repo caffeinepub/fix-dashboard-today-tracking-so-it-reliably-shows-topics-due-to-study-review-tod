@@ -1,56 +1,69 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T17:18:03.105Z",
+  "generatedAt": "2026-02-19T15:11:19.562Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 3,
+    "total": 5,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-13",
-        "summary": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
+        "id": "REQ-1",
+        "summary": "Update the backend revision completion logic so that a revision is marked as completed only when explicitly marked as reviewed by the user, not automatically based on date passage",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/CalendarView.tsx",
           "frontend/src/utils/reviewStatus.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/CalendarView.tsx"
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/utils/reviewStatus.ts"
         ]
       },
       {
-        "id": "REQ-14",
-        "summary": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-15",
-        "summary": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-16",
-        "summary": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+        "id": "REQ-3",
+        "summary": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/TodayView.tsx",
-          "frontend/src/utils/reviewStatus.ts"
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
+          "frontend/src/components/TodayView.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/SubTopicScheduleView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/SubTopicScheduleView.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/components/TodayView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/CalendarView.tsx",
           "frontend/src/components/TodayView.tsx"
         ]
       }
@@ -58,8 +71,8 @@
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
@@ -68,9 +81,12 @@
     "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/SubTopicScheduleView.tsx",
     "frontend/src/components/TodayView.tsx",
+    "frontend/src/components/TopicDetailView.tsx",
+    "frontend/src/components/TopicsView.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/utils/reviewStatus.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

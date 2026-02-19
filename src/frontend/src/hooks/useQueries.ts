@@ -438,6 +438,29 @@ export function useUpdateRevisionSchedule() {
   });
 }
 
+export function useMarkRevisionAsReviewed() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subTopicId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.markRevisionAsReviewed(subTopicId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revisionSchedule'] });
+      queryClient.invalidateQueries({ queryKey: ['todaySubTopics'] });
+      queryClient.invalidateQueries({ queryKey: ['subTopicsForDate'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedRevisionDates'] });
+      queryClient.invalidateQueries({ queryKey: ['allPlannedRevisionDates'] });
+      toast.success('Revision marked as reviewed');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark revision as reviewed: ${error.message}`);
+    },
+  });
+}
+
 export function useSetUserSettings() {
   const { actor } = useActor();
   const queryClient = useQueryClient();

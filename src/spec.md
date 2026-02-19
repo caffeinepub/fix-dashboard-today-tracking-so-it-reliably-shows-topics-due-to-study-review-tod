@@ -1,11 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Simplify the calendar view, add a redo-next-day option for missed revisions, and show both today's and overdue items in the dashboard.
+**Goal:** Implement manual revision completion workflow with visual indicators for missed revisions.
 
 **Planned changes:**
-- Remove the "reviews needing action" indicator from the calendar view; clicking a date will show only topics scheduled for that day
-- Add a "redo revision tomorrow" button in the subtopic schedule view that reschedules missed revisions to the next day and recalculates future dates
-- Update the dashboard to display two distinct groups: topics due today and overdue/missed topics from previous days
+- Update backend to mark revisions as completed only when explicitly reviewed by user, not automatically by date
+- Add red visual indicators in calendar view for dates with unreviewed past revisions
+- Add "Mark as Reviewed" button in TodayView dashboard for pending revisions
+- Add "Mark as Reviewed" button in SubTopicScheduleView calendar dialog for pending revisions
+- Ensure missed revisions transition from red (missed) to completed status when marked as reviewed
 
-**User-visible outcome:** Users can view cleaner calendar dates with only scheduled topics, easily reschedule missed revisions to tomorrow with one click, and see a clear separation between today's reviews and overdue items on the dashboard.
+**User-visible outcome:** Users can manually mark revisions as reviewed from both the dashboard and calendar views, with missed revisions appearing in red until completed.

@@ -32,6 +32,7 @@ export interface SubTopic {
 }
 export interface RevisionSchedule {
     owner: Principal;
+    isReviewed: boolean;
     subTopicId: UUID;
     intervalDays: bigint;
     studyDate: Time;
@@ -95,11 +96,9 @@ export interface backendInterface {
         hardIntervals: Array<bigint>;
     } | null>;
     isCallerAdmin(): Promise<boolean>;
+    markRevisionAsReviewed(subTopicId: UUID): Promise<void>;
     markSubTopicCompleted(id: UUID): Promise<void>;
     markSubTopicPending(id: UUID): Promise<void>;
-    /**
-     * / Set a subtopic's next revision to tomorrow and recalculate all future intervals.
-     */
     rescheduleRevisionToNextDay(subTopicId: UUID): Promise<RevisionResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     scheduleNextReview(subTopicId: UUID, days: bigint): Promise<void>;

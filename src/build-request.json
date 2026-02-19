@@ -1,93 +1,107 @@
 {
   "kind": "build_request",
-  "title": "Remove 'reviews needing action' from calendar, add redo-next-day option in schedule, and show today + overdue in dashboard",
-  "priority": "normal",
+  "title": "Implement manual revision completion workflow with missed revision indicators",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-13",
-      "text": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-user-latest"
-        ],
-        "quotes": [
-          "In calendar view I don't need reviews needing action just show topics to be revised when I click on a particular date"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Calendar view no longer displays a 'reviews needing action' count or badge.",
-        "Clicking a date in the calendar shows only the topics/subtopics scheduled for revision on that date.",
-        "The date detail panel does not show overdue carry-over items or due/pending counts."
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-user-latest"
-        ],
-        "quotes": [
-          "whenever I click a subtopic and view schedule add an option to redo revision next day if not done on particular day so accordingly modify the future dates"
-        ]
-      },
-      "acceptanceCriteria": [
-        "SubTopicScheduleView displays a 'Redo revision tomorrow' button or similar option for missed (overdue, not completed) sessions.",
-        "Clicking the option triggers a backend call that sets nextReview to tomorrow's date and recalculates the subtopic's future scheduled revision dates.",
-        "The updated schedule is reflected immediately in the UI.",
-        "All user-facing text is in English."
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "text": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
+      "id": "REQ-1",
+      "text": "Update the backend revision completion logic so that a revision is marked as completed only when explicitly marked as reviewed by the user, not automatically based on date passage",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-user-latest"
+          "msg-latest"
         ],
         "quotes": [
-          "add an option to redo revision next day if not done on particular day so accordingly modify the future dates"
+          "A revision is completed only when manually marked reviewed"
         ]
       },
       "acceptanceCriteria": [
-        "Backend provides a method to reschedule a subtopic's nextReview to tomorrow.",
-        "The method recalculates all future revision dates starting from tomorrow using the subtopic's interval schedule.",
-        "The method returns the updated schedule or subtopic state.",
-        "Access control ensures only the owner (or admin) can reschedule."
+        "Revisions remain in pending state until user explicitly marks them as reviewed",
+        "The completion timestamp reflects when the user marked it reviewed, not the scheduled date"
       ]
     },
     {
-      "id": "REQ-16",
-      "text": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
+      "id": "REQ-2",
+      "text": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-latest"
+          "msg-latest"
         ],
         "quotes": [
-          "Dashboard should show things to be revised today and things which are due or missed previous day"
+          "missed dates appear in red until reviewed"
         ]
       },
       "acceptanceCriteria": [
-        "Dashboard (TodayView) displays subtopics scheduled for today separately from overdue/missed subtopics.",
-        "Each group is labeled appropriately (e.g., 'Due Today' and 'Overdue/Missed').",
-        "The combined count reflects all items needing attention (today + overdue).",
-        "All user-facing text is in English."
+        "Calendar dates with unreviewed past revisions display in red color",
+        "Red indicators remain visible until the revision is marked as reviewed",
+        "Visual distinction between upcoming (scheduled) and overdue (missed) revisions"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "marking should be possible from both dashboard and calendar"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Button is visible for each pending revision in the dashboard",
+        "Clicking the button marks the revision as completed and updates the UI immediately",
+        "Completed revisions show completion status and timestamp"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "marking should be possible from both dashboard and calendar"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Button appears for pending revisions when viewing subtopic schedule from calendar",
+        "Marking a revision as reviewed updates both the schedule view and calendar display",
+        "Button is disabled or hidden for already completed revisions"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "missed dates appear in red until reviewed"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Marking a late revision as reviewed removes red missed indicators",
+        "Calendar updates to reflect completion status immediately",
+        "Dashboard no longer shows the revision as overdue after completion"
       ]
     }
   ],
   "constraints": [
-    "Do not change frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "Respect the single-actor architecture; all Motoko logic remains in backend/main.mo.",
-    "Use existing backend methods and query patterns; do not introduce new state types unless necessary."
+    "Do not automatically mark revisions as completed based on date alone",
+    "Preserve existing revision schedule generation logic",
+    "Maintain the existing SubTopicScheduleView dialog structure"
   ],
   "nonGoals": [
-    "Do not change the overall spaced-repetition algorithm or interval logic.",
-    "Do not alter the Topics or Settings views.",
-    "Do not modify authentication or profile setup flows."
+    "Automatic completion of revisions",
+    "Bulk marking multiple revisions as reviewed at once",
+    "Email or notification reminders for missed revisions"
   ],
   "imageRequirements": {
     "required": [],

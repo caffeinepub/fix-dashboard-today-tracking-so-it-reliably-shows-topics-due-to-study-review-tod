@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useGetSubTopics, useGetRevisionSchedule, useUpdateRevisionSchedule } from '../hooks/useQueries';
+import { useGetSubTopics, useGetRevisionSchedule, useMarkRevisionAsReviewed } from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ const difficultyColors = {
 export default function TodayView() {
   const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopics();
   const { data: revisionSchedules, isLoading: schedulesLoading } = useGetRevisionSchedule();
-  const updateRevisionSchedule = useUpdateRevisionSchedule();
+  const markRevisionAsReviewed = useMarkRevisionAsReviewed();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const isLoading = subTopicsLoading || schedulesLoading;
@@ -32,241 +32,190 @@ export default function TodayView() {
     const endOfSelected = new Date(startOfSelected);
     endOfSelected.setHours(23, 59, 59, 999);
 
-    // Create a map of subTopicId -> nextReview for quick lookup
-    const scheduleMap = new Map<string, bigint>();
-    revisionSchedules.forEach(schedule => {
-      scheduleMap.set(schedule.subTopicId.toString(), schedule.nextReview);
-    });
+    const selectedTime = dateToTime(startOfSelected);
+    const endTime = dateToTime(endOfSelected);
 
-    const dueTodayList: typeof subTopics = [];
-    const overdueList: typeof subTopics = [];
+    // Create a map of subtopic IDs to their revision schedules
+    const scheduleMap = new Map(
+      revisionSchedules.map(schedule => [schedule.subTopicId.toString(), schedule])
+    );
 
-    subTopics.forEach(subTopic => {
-      // Skip completed subtopics
-      if (subTopic.completed) return;
+    // Filter subtopics that have unreviewed revisions
+    const subtopicsWithPendingRevisions = subTopics
+      .filter(subtopic => !subtopic.completed)
+      .map(subtopic => {
+        const schedule = scheduleMap.get(subtopic.id.toString());
+        return { subtopic, schedule };
+      })
+      .filter(({ schedule }) => schedule && !schedule.isReviewed);
 
-      // Get the nextReview date from schedule
-      const nextReview = scheduleMap.get(subTopic.id.toString());
-      if (!nextReview) return;
+    const dueToday = subtopicsWithPendingRevisions
+      .filter(({ schedule }) => {
+        if (!schedule) return false;
+        return schedule.nextReview >= selectedTime && schedule.nextReview <= endTime;
+      })
+      .map(({ subtopic }) => subtopic);
 
-      const reviewDate = timeToDate(nextReview);
+    const overdue = subtopicsWithPendingRevisions
+      .filter(({ schedule }) => {
+        if (!schedule) return false;
+        return schedule.nextReview < selectedTime;
+      })
+      .map(({ subtopic }) => subtopic);
 
-      // Check if this review is due on or before the selected date
-      if (reviewDate <= endOfSelected) {
-        // Categorize as overdue (before selected date) or due on selected date
-        if (reviewDate < startOfSelected) {
-          overdueList.push(subTopic);
-        } else {
-          dueTodayList.push(subTopic);
-        }
-      }
-    });
-
-    return { dueToday: dueTodayList, overdue: overdueList };
+    return { dueToday, overdue };
   }, [subTopics, revisionSchedules, selectedDate]);
 
-  const totalCount = dueToday.length + overdue.length;
-
-  const handleMarkCompleted = async (subTopicId: bigint) => {
-    try {
-      await updateRevisionSchedule.mutateAsync(subTopicId);
-    } catch (error) {
-      console.error('Failed to mark as completed:', error);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
     }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value);
-    if (!isNaN(newDate.getTime())) {
-      setSelectedDate(newDate);
-    }
+  const handleMarkAsReviewed = async (subTopicId: bigint) => {
+    await markRevisionAsReviewed.mutateAsync(subTopicId);
   };
-
-  const isToday = useMemo(() => {
-    const today = startOfDay(new Date());
-    const selected = startOfDay(selectedDate);
-    return today.getTime() === selected.getTime();
-  }, [selectedDate]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  const isToday = startOfDay(selectedDate).getTime() === startOfDay(new Date()).getTime();
+  const dateLabel = isToday ? 'Today' : format(selectedDate, 'MMMM d, yyyy');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {isToday ? "Today's Reviews" : 'Reviews for Selected Date'}
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            {totalCount === 0
-              ? 'No reviews scheduled'
-              : `${totalCount} ${totalCount === 1 ? 'review' : 'reviews'} needing attention`}
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">Revision Dashboard</h2>
+          <p className="text-muted-foreground">Track your daily revision schedule</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <input
             type="date"
             value={format(selectedDate, 'yyyy-MM-dd')}
-            onChange={handleDateChange}
-            className="px-3 py-2 border rounded-md text-sm bg-background"
+            onChange={(e) => handleDateChange(new Date(e.target.value))}
+            className="px-3 py-2 border rounded-md bg-background"
           />
         </div>
       </div>
 
-      {totalCount === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-muted-foreground">
-              {isToday ? "You're all caught up!" : 'No reviews for this date'}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              {isToday ? 'No reviews scheduled for today' : 'Select a different date to view reviews'}
-            </p>
+      {overdue.length > 0 && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              Overdue / Missed ({overdue.length})
+            </CardTitle>
+            <CardDescription>These revisions were scheduled before {dateLabel.toLowerCase()}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {overdue.map((subtopic) => {
+              const schedule = revisionSchedules?.find(s => s.subTopicId === subtopic.id);
+              return (
+                <div
+                  key={subtopic.id.toString()}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold truncate">{subtopic.title}</h3>
+                      <Badge variant="outline" className={difficultyColors[subtopic.difficulty]}>
+                        {subtopic.difficulty}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{subtopic.mainTopicTitle}</p>
+                    {schedule && (
+                      <p className="text-xs text-destructive mt-1">
+                        Due: {format(timeToDate(schedule.nextReview), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleMarkAsReviewed(subtopic.id)}
+                    disabled={markRevisionAsReviewed.isPending}
+                    className="ml-4"
+                  >
+                    {markRevisionAsReviewed.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Mark as Reviewed
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-6">
-          {/* Overdue Section */}
-          {overdue.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                <h3 className="text-xl font-semibold">Overdue / Missed</h3>
-                <Badge variant="destructive" className="ml-2">
-                  {overdue.length}
-                </Badge>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {overdue.map(subTopic => {
-                  const schedule = revisionSchedules?.find(s => s.subTopicId === subTopic.id);
-                  const nextReviewDate = schedule ? timeToDate(schedule.nextReview) : null;
-
-                  return (
-                    <Card key={subTopic.id.toString()} className="border-destructive/50 bg-destructive/5">
-                      <CardHeader>
-                        <div className="flex items-start justify-between gap-2">
-                          <CardTitle className="text-lg line-clamp-2">{subTopic.title}</CardTitle>
-                          <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                            {subTopic.difficulty}
-                          </Badge>
-                        </div>
-                        <CardDescription className="line-clamp-2">{subTopic.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">From:</span>
-                          <span className="font-medium">{subTopic.mainTopicTitle}</span>
-                        </div>
-                        {nextReviewDate && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Due:</span>
-                            <Badge variant="destructive" className="text-xs">
-                              {format(nextReviewDate, 'MMM d, yyyy')}
-                            </Badge>
-                          </div>
-                        )}
-                        <Button
-                          onClick={() => handleMarkCompleted(subTopic.id)}
-                          disabled={updateRevisionSchedule.isPending}
-                          className="w-full"
-                          size="sm"
-                        >
-                          {updateRevisionSchedule.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Marking...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Mark as Reviewed
-                            </>
-                          )}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Due Today Section */}
-          {dueToday.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                <h3 className="text-xl font-semibold">
-                  {isToday ? 'Due Today' : `Due on ${format(selectedDate, 'MMM d, yyyy')}`}
-                </h3>
-                <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
-                  {dueToday.length}
-                </Badge>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {dueToday.map(subTopic => {
-                  const schedule = revisionSchedules?.find(s => s.subTopicId === subTopic.id);
-                  const nextReviewDate = schedule ? timeToDate(schedule.nextReview) : null;
-
-                  return (
-                    <Card key={subTopic.id.toString()}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between gap-2">
-                          <CardTitle className="text-lg line-clamp-2">{subTopic.title}</CardTitle>
-                          <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                            {subTopic.difficulty}
-                          </Badge>
-                        </div>
-                        <CardDescription className="line-clamp-2">{subTopic.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">From:</span>
-                          <span className="font-medium">{subTopic.mainTopicTitle}</span>
-                        </div>
-                        {nextReviewDate && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Due:</span>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                              {format(nextReviewDate, 'MMM d, yyyy')}
-                            </Badge>
-                          </div>
-                        )}
-                        <Button
-                          onClick={() => handleMarkCompleted(subTopic.id)}
-                          disabled={updateRevisionSchedule.isPending}
-                          className="w-full"
-                          size="sm"
-                        >
-                          {updateRevisionSchedule.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Marking...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Mark as Reviewed
-                            </>
-                          )}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Due {isToday ? 'Today' : `on ${format(selectedDate, 'MMMM d')}`} ({dueToday.length})</CardTitle>
+          <CardDescription>
+            {dueToday.length === 0
+              ? `No revisions scheduled for ${dateLabel.toLowerCase()}`
+              : `Complete these revisions ${isToday ? 'today' : `on ${format(selectedDate, 'MMM d')}`}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {dueToday.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>All clear for {dateLabel.toLowerCase()}!</p>
+            </div>
+          ) : (
+            dueToday.map((subtopic) => {
+              const schedule = revisionSchedules?.find(s => s.subTopicId === subtopic.id);
+              return (
+                <div
+                  key={subtopic.id.toString()}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold truncate">{subtopic.title}</h3>
+                      <Badge variant="outline" className={difficultyColors[subtopic.difficulty]}>
+                        {subtopic.difficulty}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{subtopic.mainTopicTitle}</p>
+                    {schedule && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Scheduled: {format(timeToDate(schedule.nextReview), 'MMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleMarkAsReviewed(subtopic.id)}
+                    disabled={markRevisionAsReviewed.isPending}
+                    className="ml-4"
+                  >
+                    {markRevisionAsReviewed.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Mark as Reviewed
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

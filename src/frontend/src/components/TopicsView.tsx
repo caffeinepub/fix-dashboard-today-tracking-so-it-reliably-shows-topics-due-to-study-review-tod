@@ -32,8 +32,7 @@ export default function TopicsView() {
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'main' | 'sub'; id: bigint } | null>(null);
   const [detailViewOpen, setDetailViewOpen] = useState(false);
   const [viewingMainTopic, setViewingMainTopic] = useState<MainTopic | null>(null);
-  const [scheduleViewOpen, setScheduleViewOpen] = useState(false);
-  const [viewingSubTopic, setViewingSubTopic] = useState<SubTopic | null>(null);
+  const [viewingSubTopicId, setViewingSubTopicId] = useState<bigint | null>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
 
   const mainTopics = topicsData?.mainTopics || [];
@@ -128,13 +127,11 @@ export default function TopicsView() {
 
   const handleViewSchedule = (subTopic: SubTopic, e: React.MouseEvent) => {
     e.stopPropagation();
-    setViewingSubTopic(subTopic);
-    setScheduleViewOpen(true);
+    setViewingSubTopicId(subTopic.id);
   };
 
   const handleScheduleViewClose = () => {
-    setScheduleViewOpen(false);
-    setViewingSubTopic(null);
+    setViewingSubTopicId(null);
   };
 
   if (isLoading) {
@@ -247,118 +244,126 @@ export default function TopicsView() {
                     </CardHeader>
                     <CollapsibleContent>
                       <CardContent className="pt-0">
-                        <div className="space-y-3 pl-7">
-                          {activeSubs.map((subTopic) => {
-                            const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
-                            const isPast = studyDate < new Date();
-
-                            return (
-                              <div
-                                key={subTopic.id.toString()}
-                                className="rounded-lg border p-3 hover:bg-accent/50 transition-colors"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <h4 className="font-medium text-sm">{subTopic.title}</h4>
-                                      <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs`}>
-                                        {subTopic.difficulty}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{subTopic.description}</p>
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <Calendar className="h-3 w-3" />
-                                      <span>{format(studyDate, 'MMM d, yyyy')}</span>
-                                      {isPast && <Badge variant="outline" className="text-xs">Past</Badge>}
-                                      {!isPast && <Badge variant="outline" className="text-xs">Upcoming</Badge>}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => handleViewSchedule(subTopic, e)}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => handleToggleComplete(subTopic, e)}
-                                      disabled={markCompleted.isPending || markPending.isPending}
-                                    >
-                                      <Circle className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => handleEditSubTopic(subTopic, e)}
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => handleDeleteSubTopic(subTopic.id, e)}
-                                      disabled={deleteSubTopic.isPending}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {completedSubs.length > 0 && (
-                            <div className="space-y-2 mt-4">
-                              <p className="text-xs font-medium text-muted-foreground">Completed Subtopics</p>
-                              {completedSubs.map((subTopic) => {
+                        <div className="space-y-6">
+                          {activeSubs.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-muted-foreground">Active Subtopics</h4>
+                              {activeSubs.map((subTopic) => {
                                 const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
-
                                 return (
                                   <div
                                     key={subTopic.id.toString()}
-                                    className="rounded-lg border p-3 opacity-60"
+                                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors"
                                   >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <h4 className="font-medium text-sm">{subTopic.title}</h4>
-                                          <Badge variant="outline" className={`${difficultyColors[subTopic.difficulty]} text-xs`}>
-                                            {subTopic.difficulty}
-                                          </Badge>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{subTopic.description}</p>
-                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                          <Calendar className="h-3 w-3" />
-                                          <span>{format(studyDate, 'MMM d, yyyy')}</span>
-                                        </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <h5 className="font-semibold">{subTopic.title}</h5>
+                                        <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
+                                          {subTopic.difficulty}
+                                        </Badge>
                                       </div>
-                                      <div className="flex items-center gap-1 flex-shrink-0">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => handleViewSchedule(subTopic, e)}
-                                        >
-                                          <Eye className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => handleToggleComplete(subTopic, e)}
-                                          disabled={markCompleted.isPending || markPending.isPending}
-                                        >
-                                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => handleDeleteSubTopic(subTopic.id, e)}
-                                          disabled={deleteSubTopic.isPending}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                      <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Study date: {format(studyDate, 'MMM d, yyyy')}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 ml-4">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleViewSchedule(subTopic, e)}
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        Schedule
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleToggleComplete(subTopic, e)}
+                                        disabled={markCompleted.isPending || markPending.isPending}
+                                      >
+                                        {subTopic.completed ? (
+                                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        ) : (
+                                          <Circle className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleEditSubTopic(subTopic, e)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleDeleteSubTopic(subTopic.id, e)}
+                                        disabled={deleteSubTopic.isPending}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {completedSubs.length > 0 && (
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-muted-foreground">Completed Subtopics</h4>
+                              {completedSubs.map((subTopic) => {
+                                const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                                return (
+                                  <div
+                                    key={subTopic.id.toString()}
+                                    className="flex items-center justify-between p-3 rounded-lg border opacity-60 hover:bg-accent/50 transition-colors"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <h5 className="font-semibold">{subTopic.title}</h5>
+                                        <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
+                                          {subTopic.difficulty}
+                                        </Badge>
                                       </div>
+                                      <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Study date: {format(studyDate, 'MMM d, yyyy')}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 ml-4">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleViewSchedule(subTopic, e)}
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        Schedule
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleToggleComplete(subTopic, e)}
+                                        disabled={markCompleted.isPending || markPending.isPending}
+                                      >
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleEditSubTopic(subTopic, e)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => handleDeleteSubTopic(subTopic.id, e)}
+                                        disabled={deleteSubTopic.isPending}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
                                     </div>
                                   </div>
                                 );
@@ -378,34 +383,121 @@ export default function TopicsView() {
 
       {completedMainTopics.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-muted-foreground">Completed Topics</h3>
+          <h3 className="text-xl font-semibold">Completed Topics</h3>
           <div className="space-y-3">
             {completedMainTopics.map((mainTopic) => {
               const subs = subTopicsByMainTopic.get(mainTopic.id.toString()) || [];
+              const isExpanded = expandedTopics.has(mainTopic.id.toString());
 
               return (
-                <Card key={mainTopic.id.toString()} className="opacity-60">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{mainTopic.title}</CardTitle>
-                        <CardDescription className="mt-1">{mainTopic.description}</CardDescription>
-                        <Badge variant="outline" className="text-xs mt-2">
-                          {subs.length} subtopic{subs.length !== 1 ? 's' : ''} completed
-                        </Badge>
+                <Card key={mainTopic.id.toString()} className="opacity-60 overflow-hidden">
+                  <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(mainTopic.id.toString())}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <CollapsibleTrigger className="flex items-start gap-2 flex-1 text-left hover:opacity-80 transition-opacity">
+                          {isExpanded ? (
+                            <ChevronDown className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <CardTitle className="text-xl">{mainTopic.title}</CardTitle>
+                            <CardDescription className="mt-1">{mainTopic.description}</CardDescription>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                                All completed
+                              </Badge>
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleViewDetails(mainTopic)}
+                          >
+                            View All
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleEditMainTopic(mainTopic, e)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleDeleteMainTopic(mainTopic.id, e)}
+                            disabled={deleteMainTopic.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => handleDeleteMainTopic(mainTopic.id, e)}
-                          disabled={deleteMainTopic.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent className="pt-0">
+                        <div className="space-y-2">
+                          {subs.map((subTopic) => {
+                            const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                            return (
+                              <div
+                                key={subTopic.id.toString()}
+                                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h5 className="font-semibold">{subTopic.title}</h5>
+                                    <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
+                                      {subTopic.difficulty}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Study date: {format(studyDate, 'MMM d, yyyy')}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 ml-4">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => handleViewSchedule(subTopic, e)}
+                                  >
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    Schedule
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => handleToggleComplete(subTopic, e)}
+                                    disabled={markCompleted.isPending || markPending.isPending}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => handleEditSubTopic(subTopic, e)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => handleDeleteSubTopic(subTopic.id, e)}
+                                    disabled={deleteSubTopic.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </Card>
               );
             })}
@@ -426,11 +518,12 @@ export default function TopicsView() {
         mainTopic={viewingMainTopic}
       />
 
-      <SubTopicScheduleView
-        open={scheduleViewOpen}
-        onOpenChange={handleScheduleViewClose}
-        subTopic={viewingSubTopic}
-      />
+      {viewingSubTopicId && (
+        <SubTopicScheduleView
+          subTopicId={viewingSubTopicId}
+          onClose={handleScheduleViewClose}
+        />
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

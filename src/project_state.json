@@ -1,103 +1,44 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 13,
-  "summary": "Study/revision scheduling app with calendar and a main dashboard that should show the topic to study today.",
+  "projectStateVersion": 3,
+  "summary": "Revision tracking app with manual completion workflow",
   "architectural_notes": [
-    "Today dashboard should surface overdue/carry-over items across days, while the calendar should reflect only the original scheduled date (no duplication on subsequent days)."
+    "Revision completion requires explicit user action (manual review)",
+    "Missed revisions displayed in red until marked as reviewed",
+    "Review action available in both dashboard and calendar interfaces"
   ],
-  "known_issues": [
-    "Main dashboard does not properly track or display the topic to be studied today.",
-    "Missed (not revised) topics do not reliably carry over to the next day’s Today dashboard without also appearing/duplicating in the calendar as if rescheduled.",
-    "Dashboard is currently returning/displaying only overdue topics; it should also include topics due on the selected date (e.g., today) alongside overdue items.",
-    "After deploying Version 8, the Today dashboard still shows fewer items due today than the calendar (e.g., calendar shows 5 due today but dashboard shows only 1), indicating the dashboard query and/or due-vs-overdue filtering/display is still incorrect."
-  ],
+  "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-today-dashboard-to-correctly-communicate-and-display-due-vs-overdue-items-returned-by-the-backend-in-todayview-distinguish-between-items-due-today-and-overdue-based-on-comparing-the-subtopic-s-scheduled-date-with-the-current-day-and-render-an-appropriate-label-badge-for-each-state-ensure-empty-states-and-counts-reflect-the-new-behavior-e-g-overdue-items-should-be-counted-as-needing-attention-today-keep-all-user-facing-text-in-english",
-      "title": "Update the frontend Today dashboard to correctly communicate and display due vs overdue items returned by the backend.\n\n- In `TodayView`, distinguish between items due today and overdue (based on comparing the subtopic’s scheduled date with the current day) and render an appropriate label/badge for each state.\n- Ensure empty states and counts reflect the new behavior (e.g., overdue items should be counted as needing attention today).\n- Keep all user-facing text in English.",
+      "id": "feature-add-visual-indicators-in-the-calendar-view-to-show-missed-revisions-in-red-for-dates-where-scheduled-revisions-were-not-marked-as-reviewed",
+      "title": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-mark-as-reviewed-action-button-in-the-todayview-dashboard-that-allows-users-to-complete-revisions-for-subtopics-due-on-the-selected-date",
+      "title": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-prevent-missed-overdue-subtopics-from-being-re-added-duplicated-or-shifted-to-the-next-day-in-the-calendar-view-the-calendar-must-reflect-only-the-original-studydate-and-the-scheduled-revision-plan-derived-from-the-stored-schedule-not-an-automatic-catch-up-event-on-the-current-day",
-      "title": "Prevent missed/overdue subtopics from being re-added, duplicated, or shifted to the next day in the calendar view; the calendar must reflect only the original studyDate and the scheduled revision plan derived from the stored schedule, not an automatic catch-up event on the current day.",
+      "id": "feature-add-mark-as-reviewed-action-button-in-the-subtopicscheduleview-calendar-dialog-that-allows-users-to-complete-revisions-when-viewing-a-subtopic-s-schedule-from-the-calendar",
+      "title": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-that-when-a-missed-revision-is-marked-as-reviewed-after-its-scheduled-date-it-transitions-from-red-missed-to-completed-status-in-all-views",
+      "title": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
       "reqIds": [
         "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-today-dashboard-ui-to-support-a-specific-date-context-not-only-today-allow-the-user-to-pick-a-date-and-show-a-items-due-on-that-date-and-b-overdue-carry-over-items-together-for-that-selected-date",
-      "title": "Update the Today dashboard UI to support a specific date context (not only “today”): allow the user to pick a date, and show (a) items due on that date and (b) overdue carry-over items together for that selected date.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-change-revision-schedule-navigation-so-users-can-view-a-single-subtopic-s-revision-schedule-by-drilling-down-main-topic-subtopics-list-click-a-subtopic-including-completed-subtopics-view-that-subtopic-s-revision-schedule",
-      "title": "Change revision schedule navigation so users can view a single subtopic’s revision schedule by drilling down: Main Topic → Subtopics list → click a subtopic (including completed subtopics) → view that subtopic’s revision schedule.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-calendar-view-so-it-clearly-distinguishes-between-a-planned-revision-sessions-shown-on-the-calendar-and-b-reviews-that-are-actually-due-pending-on-the-selected-date-and-ensure-completed-subtopics-are-not-counted-as-due-pending",
-      "title": "Update the Calendar view so it clearly distinguishes between (a) planned revision sessions shown on the calendar and (b) reviews that are actually due/pending on the selected date, and ensure completed subtopics are not counted as due/pending.",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-dashboard-today-selected-date-to-review-count-matches-the-calendar-view-s-due-pending-reviews-count-for-the-same-selected-date-by-using-the-same-definition-of-due-pending-nextreview-on-the-selected-date-plus-overdue-carry-over-exclude-completed",
-      "title": "Ensure the Dashboard (Today/selected-date) 'to review' count matches the Calendar view's 'due/pending reviews' count for the same selected date by using the same definition of 'due/pending' (nextReview on the selected date, plus overdue carry-over; exclude completed).",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-subtopic-revision-schedule-dialog-frontend-src-components-subtopicscheduleview-tsx-to-display-a-progress-indicator-showing-how-many-revisions-have-been-completed-out-of-the-total-planned-revisions-for-that-subtopic-e-g-4-5-and-or-1-5-remaining-use-english-for-any-user-facing-text",
-      "title": "Update the Subtopic revision schedule dialog (`frontend/src/components/SubTopicScheduleView.tsx`) to display a progress indicator showing how many revisions have been completed out of the total planned revisions for that subtopic (e.g., \"4/5\" and/or \"1/5 remaining\"). Use English for any user-facing text.",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-the-subtopic-revision-schedule-list-frontend-src-components-subtopicscheduleview-tsx-visually-indicate-each-scheduled-session-s-completion-status-show-completed-sessions-in-green-completed-on-the-scheduled-date-or-later-and-show-past-sessions-that-are-not-completed-in-red-keep-upcoming-sessions-in-a-neutral-style-use-english-for-any-status-labels-badges",
-      "title": "In the Subtopic revision schedule list (`frontend/src/components/SubTopicScheduleView.tsx`), visually indicate each scheduled session’s completion status: show completed sessions in green (completed on the scheduled date or later), and show past sessions that are not completed in red; keep upcoming sessions in a neutral style. Use English for any status labels/badges.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-calendarview-frontend-src-components-calendarview-tsx-remove-the-reviews-needing-action-indicator-count-and-display-only-the-topics-scheduled-to-be-revised-when-the-user-clicks-on-a-particular-date",
-      "title": "In CalendarView (frontend/src/components/CalendarView.tsx), remove the 'reviews needing action' indicator/count and display only the topics scheduled to be revised when the user clicks on a particular date.",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-subtopicscheduleview-frontend-src-components-subtopicscheduleview-tsx-add-a-user-action-button-or-link-to-reschedule-a-missed-revision-to-the-next-day-when-activated-update-the-subtopic-s-nextreview-date-to-tomorrow-and-recalculate-all-future-revision-dates-accordingly-by-calling-the-backend",
-      "title": "In SubTopicScheduleView (frontend/src/components/SubTopicScheduleView.tsx), add a user action (button or link) to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly by calling the backend.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-todayview-frontend-src-components-todayview-tsx-so-the-dashboard-shows-both-a-topics-to-be-revised-today-subtopics-with-nextreview-matching-the-selected-date-and-b-topics-that-are-due-or-missed-from-previous-days-overdue-carry-over-clearly-distinguish-these-two-groups-in-the-ui",
-      "title": "Update TodayView (frontend/src/components/TodayView.tsx) so the dashboard shows both (a) topics to be revised today (subtopics with nextReview matching the selected date) and (b) topics that are due or missed from previous days (overdue carry-over). Clearly distinguish these two groups in the UI.",
-      "reqIds": [
-        "REQ-16"
       ],
       "version": 1
     }
@@ -105,88 +46,26 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update the backend logic for fetching items due today so the dashboard consistently returns the correct subtopics, including overdue reviews.\n\nSpecifically:\n- Change `getTodaySubTopics()` so it returns subtopics whose scheduled `nextReview` date is **today or earlier** (overdue), not only those whose `nextReview` falls exactly on today.\n- Ensure returned items are filtered to the authenticated caller (or admin behavior preserved as currently implemented).\n- Sort returned subtopics in a stable, user-friendly order (e.g., by `nextReview` ascending when available, otherwise by `studyDate`/creation order), so the dashboard does not appear to “randomly” change.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Manual revision completion: revisions marked completed only when manually reviewed, missed dates shown in red until reviewed",
+      "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Ensure the backend scheduling mechanism supports “study today” expectations for newly created subtopics.\n\nWhen creating a new subtopic, the first scheduled review date must reflect the user-selected `studyDate` instead of always being based on `Time.now()`.\n- Update the backend so that the initial `RevisionSchedule.nextReview` for a newly created subtopic is derived from its `studyDate` (or, if `studyDate` is in the past, schedule it as due immediately).\n- Keep the existing spaced-repetition behavior for subsequent reviews triggered by `updateRevisionSchedule()`.",
-      "reqIds": [
-        "REQ-2"
-      ],
+      "summary": "Mark as reviewed functionality in both dashboard and calendar views",
+      "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "If a user does not revise a topic on its scheduled day, it should continue to appear on the next day’s Today dashboard (as overdue/carry-over), but it should not be re-added or duplicated in the calendar view.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Ensure that when a subtopic is not reviewed on its scheduled day, it continues to appear on subsequent days in the Today dashboard (as overdue/carry-over) without changing its stored scheduled review date.",
+      "summary": "Update the backend revision completion logic so that a revision is marked as completed only when explicitly marked as reviewed by the user, not automatically based on date passage",
       "reqIds": [
-        "REQ-4"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Today dashboard should show both (a) items due on the selected day (e.g., today) and (b) overdue items—currently it appears to show only overdue items. Ensure the dashboard query/filters and UI state support a specific date context (\"topics to be revised on a particular date\") while still including overdue carry-over.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Change revision schedule navigation so users can view a subtopic’s revision schedule by drilling down: Main Topic -> Subtopics list -> click a (completed) subtopic to open its revision schedule, instead of only showing the full topic’s revision schedule list.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Update the backend so the dashboard can fetch subtopics due on a specific date, including overdue items (items whose next scheduled review is earlier than the selected date).",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Enhance the subtopic revision schedule view to show completion status and progress count.\n- In the revision schedule for a selected subtopic, visually indicate sessions completed on-time or late (e.g., show in green) and not completed/overdue (e.g., show in red).\n- Display a progress indicator showing how many revisions have been completed out of the total planned (e.g., 4/5 completed or 1/5 remaining).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "In calendar view, remove the 'reviews needing action' indicator/count and show only the topics scheduled to be revised on the selected date.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "In the subtopic revision schedule dialog, add an option to reschedule a missed revision to the next day. When activated, update the subtopic's nextReview date to tomorrow and recalculate all future revision dates accordingly.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Dashboard should show both (a) topics to be revised today and (b) topics that were due or missed on previous days (overdue/carry-over).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Add a backend method (e.g., rescheduleRevisionToNextDay) that accepts a subtopic ID, sets its nextReview to the day after the current date, and regenerates future revision dates based on the existing schedule intervals. Return the updated schedule.",
-      "reqIds": [
-        "REQ-15"
+        "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Fix dashboard 'Today' tracking so it reliably shows topics due to study/review today",
+  "projectName": "Implement manual revision completion workflow with missed revision indicators",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

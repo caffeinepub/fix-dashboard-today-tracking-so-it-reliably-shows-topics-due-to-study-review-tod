@@ -27,6 +27,7 @@ export interface RevisionResult {
 }
 export interface RevisionSchedule {
   'owner' : Principal,
+  'isReviewed' : boolean,
   'subTopicId' : UUID,
   'intervalDays' : bigint,
   'studyDate' : Time,
@@ -105,11 +106,9 @@ export interface _SERVICE {
     ]
   >,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'markRevisionAsReviewed' : ActorMethod<[UUID], undefined>,
   'markSubTopicCompleted' : ActorMethod<[UUID], undefined>,
   'markSubTopicPending' : ActorMethod<[UUID], undefined>,
-  /**
-   * / Set a subtopic's next revision to tomorrow and recalculate all future intervals.
-   */
   'rescheduleRevisionToNextDay' : ActorMethod<[UUID], RevisionResult>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'scheduleNextReview' : ActorMethod<[UUID, bigint], undefined>,

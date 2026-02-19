@@ -30,6 +30,7 @@ export const MainTopic = IDL.Record({
 });
 export const RevisionSchedule = IDL.Record({
   'owner' : IDL.Principal,
+  'isReviewed' : IDL.Bool,
   'subTopicId' : UUID,
   'intervalDays' : IDL.Nat,
   'studyDate' : Time,
@@ -140,6 +141,7 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'markRevisionAsReviewed' : IDL.Func([UUID], [], []),
   'markSubTopicCompleted' : IDL.Func([UUID], [], []),
   'markSubTopicPending' : IDL.Func([UUID], [], []),
   'rescheduleRevisionToNextDay' : IDL.Func([UUID], [RevisionResult], []),
@@ -185,6 +187,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RevisionSchedule = IDL.Record({
     'owner' : IDL.Principal,
+    'isReviewed' : IDL.Bool,
     'subTopicId' : UUID,
     'intervalDays' : IDL.Nat,
     'studyDate' : Time,
@@ -303,6 +306,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'markRevisionAsReviewed' : IDL.Func([UUID], [], []),
     'markSubTopicCompleted' : IDL.Func([UUID], [], []),
     'markSubTopicPending' : IDL.Func([UUID], [], []),
     'rescheduleRevisionToNextDay' : IDL.Func([UUID], [RevisionResult], []),
