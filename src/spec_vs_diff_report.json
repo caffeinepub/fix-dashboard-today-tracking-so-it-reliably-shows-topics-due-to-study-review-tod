@@ -1,23 +1,22 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-19T15:11:19.559Z",
-  "summary": "The diff implements all requested requirements for manual revision completion workflow with missed revision indicators. Backend adds isReviewed field to RevisionSchedule, frontend adds 'Mark as Reviewed' buttons in TodayView and SubTopicScheduleView, and CalendarView shows red indicators for missed revisions. All acceptance criteria appear to be covered with proper cache invalidation and UI updates.",
+  "generatedAt": "2026-02-21T13:31:25.374Z",
+  "summary": "The diff implements all requested requirements for manual revision marking with persistent red/green status indicators. Backend adds reviewCount field to RevisionSchedule with migration, frontend adds mark-as-reviewed functionality across calendar, topics, and today views with visual indicators and review count displays.",
   "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Migration module (backend/migration.mo) for data migration with isReviewed field",
-      "reason": "No requirement requested data migration logic or backward compatibility handling for existing revision schedules",
+      "description": "Migration module (backend/migration.mo) for adding reviewCount field to RevisionSchedule",
+      "reason": "BuildRequest constraints explicitly state 'Maintain compatibility with existing isReviewed field in RevisionSchedule' - no mention of adding new fields like reviewCount. The non-goals and requirements focus only on marking revisions as reviewed (isReviewed field), not tracking review counts.",
       "evidence": [
         "backend/migration.mo"
       ]
     },
     {
-      "description": "Reschedule revision to next day functionality",
-      "reason": "The SubTopicScheduleView includes a 'Redo Tomorrow' button and useRescheduleRevisionToNextDay hook, but no requirement requested the ability to reschedule revisions to the next day",
+      "description": "Reschedule revision functionality in SubTopicScheduleView with handleReschedule function",
+      "reason": "BuildRequest does not mention rescheduling revisions. Requirements focus only on marking revisions as reviewed and displaying status indicators. Rescheduling is outside the scope of requested features.",
       "evidence": [
-        "frontend/src/components/SubTopicScheduleView.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/SubTopicScheduleView.tsx"
       ]
     }
   ],
@@ -31,8 +30,6 @@
     "frontend/src/components/TodayView.tsx",
     "frontend/src/components/TopicDetailView.tsx",
     "frontend/src/components/TopicsView.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/utils/reviewStatus.ts",
     "project_state.json"
   ]
 }

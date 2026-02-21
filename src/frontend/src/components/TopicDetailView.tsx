@@ -1,19 +1,18 @@
-import { useState } from 'react';
-import { useGetSubTopicsByMainTopic } from '../hooks/useQueries';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useMemo } from 'react';
+import { useGetSubTopicsByMainTopic, useGetRevisionSchedule } from '../hooks/useQueries';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, Eye } from 'lucide-react';
+import { Loader2, CheckCircle2, Circle } from 'lucide-react';
 import { format } from 'date-fns';
-import type { MainTopic, SubTopic } from '../backend';
+import type { MainTopic } from '../backend';
 import SubTopicScheduleView from './SubTopicScheduleView';
-
-interface TopicDetailViewProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mainTopic: MainTopic | null;
-}
+import { useState } from 'react';
 
 const difficultyColors = {
   easy: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
@@ -21,151 +20,144 @@ const difficultyColors = {
   hard: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
 };
 
-export default function TopicDetailView({ open, onOpenChange, mainTopic }: TopicDetailViewProps) {
-  const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopicsByMainTopic(mainTopic?.id || null);
-  const [viewingSubTopicId, setViewingSubTopicId] = useState<bigint | null>(null);
+interface TopicDetailViewProps {
+  mainTopic: MainTopic;
+  open: boolean;
+  onClose: () => void;
+}
 
-  const handleViewSchedule = (subTopic: SubTopic) => {
-    setViewingSubTopicId(subTopic.id);
+export default function TopicDetailView({ mainTopic, open, onClose }: TopicDetailViewProps) {
+  const { data: subTopics, isLoading } = useGetSubTopicsByMainTopic(mainTopic.id);
+  const { data: revisionSchedules } = useGetRevisionSchedule();
+  const [selectedSubTopicId, setSelectedSubTopicId] = useState<bigint | null>(null);
+
+  const { activeSubTopics, completedSubTopics } = useMemo(() => {
+    if (!subTopics) return { activeSubTopics: [], completedSubTopics: [] };
+    
+    return {
+      activeSubTopics: subTopics.filter(st => !st.completed),
+      completedSubTopics: subTopics.filter(st => st.completed),
+    };
+  }, [subTopics]);
+
+  const getReviewCount = (subTopicId: bigint): number => {
+    const schedule = revisionSchedules?.find(s => s.subTopicId === subTopicId);
+    return schedule ? Number(schedule.reviewCount) : 0;
   };
 
-  const handleScheduleViewClose = () => {
-    setViewingSubTopicId(null);
+  const handleSubTopicClick = (subTopicId: bigint) => {
+    setSelectedSubTopicId(subTopicId);
   };
 
-  if (!mainTopic) return null;
-
-  const activeSubTopics = subTopics?.filter(st => !st.completed) || [];
-  const completedSubTopics = subTopics?.filter(st => st.completed) || [];
+  const handleCloseScheduleView = () => {
+    setSelectedSubTopicId(null);
+  };
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <DialogTitle className="text-2xl">{mainTopic.title}</DialogTitle>
-                <DialogDescription className="mt-2">{mainTopic.description}</DialogDescription>
-              </div>
-            </div>
+            <DialogTitle>{mainTopic.title}</DialogTitle>
+            <DialogDescription>{mainTopic.description}</DialogDescription>
           </DialogHeader>
 
-          {subTopicsLoading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <div className="space-y-6 mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Subtopics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {subTopics && subTopics.length > 0 ? (
-                    <div className="space-y-6">
-                      {activeSubTopics.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-muted-foreground">Active Subtopics</h4>
-                          {activeSubTopics.map((subTopic) => {
-                            const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
-                            return (
-                              <div
-                                key={subTopic.id.toString()}
-                                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
-                                onClick={() => handleViewSchedule(subTopic)}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h5 className="font-semibold">{subTopic.title}</h5>
-                                    <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                                      {subTopic.difficulty}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Study date: {format(studyDate, 'MMM d, yyyy')}
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewSchedule(subTopic);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Schedule
-                                </Button>
+            <div className="space-y-6">
+              {activeSubTopics.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Active Subtopics</h3>
+                  <div className="space-y-2">
+                    {activeSubTopics.map((subTopic) => {
+                      const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                      const reviewCount = getReviewCount(subTopic.id);
+                      return (
+                        <button
+                          key={subTopic.id.toString()}
+                          onClick={() => handleSubTopicClick(subTopic.id)}
+                          className="w-full text-left p-4 rounded-lg border hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Circle className="h-4 w-4 flex-shrink-0" />
+                                <h4 className="font-semibold">{subTopic.title}</h4>
+                                <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
+                                  {subTopic.difficulty}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {reviewCount} reviews
+                                </Badge>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                              <p className="text-sm text-muted-foreground line-clamp-2">{subTopic.description}</p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Study date: {format(studyDate, 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-                      {completedSubTopics.length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-muted-foreground">Completed Subtopics</h4>
-                          {completedSubTopics.map((subTopic) => {
-                            const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
-                            return (
-                              <div
-                                key={subTopic.id.toString()}
-                                className="flex items-center justify-between p-3 rounded-lg border opacity-60 hover:bg-accent/50 transition-colors cursor-pointer"
-                                onClick={() => handleViewSchedule(subTopic)}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h5 className="font-semibold">{subTopic.title}</h5>
-                                    <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
-                                      {subTopic.difficulty}
-                                    </Badge>
-                                    <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                                      Completed
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Study date: {format(studyDate, 'MMM d, yyyy')}
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewSchedule(subTopic);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Schedule
-                                </Button>
+              {completedSubTopics.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Completed Subtopics</h3>
+                  <div className="space-y-2">
+                    {completedSubTopics.map((subTopic) => {
+                      const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                      const reviewCount = getReviewCount(subTopic.id);
+                      return (
+                        <button
+                          key={subTopic.id.toString()}
+                          onClick={() => handleSubTopicClick(subTopic.id)}
+                          className="w-full text-left p-4 rounded-lg border opacity-60 hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                <h4 className="font-semibold">{subTopic.title}</h4>
+                                <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
+                                  {subTopic.difficulty}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {reviewCount} reviews
+                                </Badge>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      No subtopics yet. Add subtopics to see their revision schedules.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                              <p className="text-sm text-muted-foreground line-clamp-2">{subTopic.description}</p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Study date: {format(studyDate, 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {activeSubTopics.length === 0 && completedSubTopics.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">No subtopics found for this topic</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {viewingSubTopicId && (
+      {selectedSubTopicId && (
         <SubTopicScheduleView
-          subTopicId={viewingSubTopicId}
-          onClose={handleScheduleViewClose}
+          subTopicId={selectedSubTopicId}
+          onClose={handleCloseScheduleView}
         />
       )}
     </>

@@ -35,6 +35,7 @@ export const RevisionSchedule = IDL.Record({
   'intervalDays' : IDL.Nat,
   'studyDate' : Time,
   'nextReview' : Time,
+  'reviewCount' : IDL.Nat,
 });
 export const SubTopic = IDL.Record({
   'id' : UUID,
@@ -192,6 +193,7 @@ export const idlFactory = ({ IDL }) => {
     'intervalDays' : IDL.Nat,
     'studyDate' : Time,
     'nextReview' : Time,
+    'reviewCount' : IDL.Nat,
   });
   const SubTopic = IDL.Record({
     'id' : UUID,

@@ -1,42 +1,38 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Revision tracking app with manual completion workflow",
-  "architectural_notes": [
-    "Revision completion requires explicit user action (manual review)",
-    "Missed revisions displayed in red until marked as reviewed",
-    "Review action available in both dashboard and calendar interfaces"
-  ],
+  "summary": "Study revision tracker with manual review marking system",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-visual-indicators-in-the-calendar-view-to-show-missed-revisions-in-red-for-dates-where-scheduled-revisions-were-not-marked-as-reviewed",
-      "title": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
+      "id": "feature-when-a-user-marks-a-revision-as-reviewed-change-its-visual-indicator-to-green-and-update-the-backend-state-to-persist-this-completion-status",
+      "title": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-mark-as-reviewed-action-button-in-the-todayview-dashboard-that-allows-users-to-complete-revisions-for-subtopics-due-on-the-selected-date",
-      "title": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
+      "id": "feature-add-mark-as-reviewed-functionality-in-the-calendar-view-for-revision-sessions-displayed-on-selected-dates",
+      "title": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-mark-as-reviewed-action-button-in-the-subtopicscheduleview-calendar-dialog-that-allows-users-to-complete-revisions-when-viewing-a-subtopic-s-schedule-from-the-calendar",
-      "title": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
+      "id": "feature-ensure-mark-as-reviewed-functionality-is-available-in-the-topics-section-for-all-displayed-revision-schedules",
+      "title": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-that-when-a-missed-revision-is-marked-as-reviewed-after-its-scheduled-date-it-transitions-from-red-missed-to-completed-status-in-all-views",
-      "title": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
+      "id": "feature-display-a-count-or-indicator-showing-how-many-times-each-topic-has-been-reviewed-completed-revisions",
+      "title": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
       "reqIds": [
         "REQ-5"
       ],
@@ -46,26 +42,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Manual revision completion: revisions marked completed only when manually reviewed, missed dates shown in red until reviewed",
+      "summary": "Manual revision tracking: topics marked red until reviewed, turn green when marked complete, available in calendar and topics views",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Mark as reviewed functionality in both dashboard and calendar views",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Update the backend revision completion logic so that a revision is marked as completed only when explicitly marked as reviewed by the user, not automatically based on date passage",
+      "summary": "Keep all scheduled revision sessions marked in red (using existing missed revision styling) until the user manually marks them as reviewed",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Implement manual revision completion workflow with missed revision indicators",
+  "projectName": "Refine manual revision marking with persistent red/green status indicators",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

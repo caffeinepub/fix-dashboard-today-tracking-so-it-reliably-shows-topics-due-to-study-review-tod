@@ -9,9 +9,9 @@ import Order "mo:core/Order";
 import Text "mo:core/Text";
 import Int "mo:core/Int";
 import Principal "mo:core/Principal";
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
 
 (with migration = Migration.run)
 actor {
@@ -57,6 +57,7 @@ actor {
     intervalDays : Nat;
     studyDate : Time.Time;
     isReviewed : Bool;
+    reviewCount : Nat;
   };
 
   type UserSettings = {
@@ -219,8 +220,6 @@ actor {
 
         subTopics.add(id, subTopic);
 
-        // Schedule initial review based on the requested studyDate
-        let initialDayLength = 24 * 60 * 60 * 1_000_000_000;
         let initialRevision : RevisionSchedule = {
           subTopicId = id;
           owner = caller;
@@ -228,6 +227,7 @@ actor {
           intervalDays = 0;
           studyDate;
           isReviewed = false;
+          reviewCount = 0;
         };
         revisionSchedules.add(id, initialRevision);
 
@@ -539,6 +539,12 @@ actor {
         };
 
         let dayLength : Int = 24 * 60 * 60 * 1_000_000_000 : Nat;
+        let currentSchedule = revisionSchedules.get(subTopicId);
+        let newReviewCount = switch (currentSchedule) {
+          case (null) { 1 };
+          case (?existing) { existing.reviewCount + 1 };
+        };
+
         let schedule : RevisionSchedule = {
           subTopicId;
           owner = subTopic.owner;
@@ -546,6 +552,7 @@ actor {
           intervalDays;
           studyDate = subTopic.studyDate;
           isReviewed = false;
+          reviewCount = newReviewCount;
         };
         revisionSchedules.add(subTopicId, schedule);
         schedule;
@@ -603,6 +610,7 @@ actor {
           intervalDays = days;
           studyDate = subTopic.studyDate;
           isReviewed = false;
+          reviewCount = 0;
         };
         revisionSchedules.add(subTopicId, schedule);
       };
@@ -802,6 +810,7 @@ actor {
           intervalDays = if (intervals.size() > 0) { intervals[0] } else { 0 };
           studyDate = subTopic.studyDate;
           isReviewed = false;
+          reviewCount = 0;
         };
 
         revisionSchedules.add(subTopicId, newSchedule);

@@ -2,11 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-visual-indicators-in-the-calendar-view-to-show-missed-revisions-in-red-for-dates-where-scheduled-revisions-were-not-marked-as-reviewed",
-      "featureTitle": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
+      "featureId": "feature-when-a-user-marks-a-revision-as-reviewed-change-its-visual-indicator-to-green-and-update-the-backend-state-to-persist-this-completion-status",
+      "featureTitle": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
       "files": [
         "frontend/src/components/CalendarView.tsx",
-        "frontend/src/utils/reviewStatus.ts"
+        "frontend/src/components/SubTopicScheduleView.tsx",
+        "frontend/src/components/TodayView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,11 +23,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-mark-as-reviewed-action-button-in-the-todayview-dashboard-that-allows-users-to-complete-revisions-for-subtopics-due-on-the-selected-date",
-      "featureTitle": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
+      "featureId": "feature-add-mark-as-reviewed-functionality-in-the-calendar-view-for-revision-sessions-displayed-on-selected-dates",
+      "featureTitle": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
       "files": [
-        "frontend/src/components/TodayView.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/CalendarView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -42,10 +42,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-mark-as-reviewed-action-button-in-the-subtopicscheduleview-calendar-dialog-that-allows-users-to-complete-revisions-when-viewing-a-subtopic-s-schedule-from-the-calendar",
-      "featureTitle": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
+      "featureId": "feature-ensure-mark-as-reviewed-functionality-is-available-in-the-topics-section-for-all-displayed-revision-schedules",
+      "featureTitle": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
       "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx"
+        "frontend/src/components/SubTopicScheduleView.tsx",
+        "frontend/src/components/TodayView.tsx",
+        "frontend/src/components/TopicsView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -61,11 +63,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-that-when-a-missed-revision-is-marked-as-reviewed-after-its-scheduled-date-it-transitions-from-red-missed-to-completed-status-in-all-views",
-      "featureTitle": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
+      "featureId": "feature-display-a-count-or-indicator-showing-how-many-times-each-topic-has-been-reviewed-completed-revisions",
+      "featureTitle": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
       "files": [
-        "frontend/src/components/CalendarView.tsx",
-        "frontend/src/components/TodayView.tsx"
+        "frontend/src/components/SubTopicScheduleView.tsx",
+        "frontend/src/components/TopicDetailView.tsx",
+        "frontend/src/components/TopicsView.tsx"
       ],
       "components": [
         "authorization@4.0.0",

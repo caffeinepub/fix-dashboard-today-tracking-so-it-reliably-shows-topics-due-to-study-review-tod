@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, CheckCircle2, Circle, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Difficulty } from '../backend';
 import { timeToDate } from '../utils/time';
@@ -50,20 +50,34 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
     // Check if current revision is overdue and not reviewed
     const isOverdue = nextReviewDate < now && !currentSchedule.isReviewed;
 
-    // Count completed and remaining revisions
-    const allDates = [studyDate, ...plannedDates.map(timeToDate)];
-    const completedCount = currentSchedule.isReviewed ? allDates.findIndex(d => d.getTime() === nextReviewDate.getTime()) + 1 : 0;
-    const remainingCount = allDates.length - completedCount;
+    // Build all revision dates with their status
+    const allRevisionDates = plannedDates.map((date, index) => {
+      const revisionDate = timeToDate(date);
+      const isPast = revisionDate < now;
+      const isCurrent = revisionDate.getTime() === nextReviewDate.getTime();
+      
+      return {
+        date: revisionDate,
+        index: index + 1,
+        isPast,
+        isCurrent,
+        isReviewed: isCurrent ? currentSchedule.isReviewed : isPast,
+      };
+    });
+
+    const completedCount = Number(currentSchedule.reviewCount);
+    const totalCount = allRevisionDates.length;
+    const remainingCount = totalCount - completedCount;
 
     return {
       studyDate,
-      plannedDates: plannedDates.map(timeToDate),
+      allRevisionDates,
       nextReviewDate,
       isOverdue,
       isReviewed: currentSchedule.isReviewed,
       completedCount,
       remainingCount,
-      totalCount: allDates.length,
+      totalCount,
     };
   }, [subtopic, plannedDates, currentSchedule]);
 
@@ -93,7 +107,7 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Progress Summary */}
+          {/* Progress Summary with Review Count */}
           <div className="p-4 rounded-lg bg-muted/50">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Revision Progress</span>
@@ -107,18 +121,23 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
                 style={{ width: `${(scheduleData.completedCount / scheduleData.totalCount) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {scheduleData.remainingCount} revision{scheduleData.remainingCount !== 1 ? 's' : ''} remaining
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                {scheduleData.remainingCount} revision{scheduleData.remainingCount !== 1 ? 's' : ''} remaining
+              </p>
+              <Badge variant="outline" className="text-xs">
+                Total reviews: {scheduleData.completedCount}
+              </Badge>
+            </div>
           </div>
 
           {/* Current Status */}
           {scheduleData.isOverdue && !scheduleData.isReviewed && (
             <div className="p-4 rounded-lg border-destructive bg-destructive/10 border">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-destructive mb-1">Missed Revision</h3>
+                  <h3 className="font-semibold text-destructive mb-1">Not Reviewed - Overdue</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     This revision was due on {format(scheduleData.nextReviewDate, 'MMMM d, yyyy')}
                   </p>
@@ -157,9 +176,9 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
           {!scheduleData.isReviewed && !scheduleData.isOverdue && (
             <div className="p-4 rounded-lg border bg-card">
               <div className="flex items-start gap-3">
-                <Circle className="h-5 w-5 text-primary mt-0.5" />
+                <Circle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="font-semibold mb-1">Next Revision</h3>
+                  <h3 className="font-semibold mb-1">Next Revision - Not Yet Reviewed</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     Scheduled for {format(scheduleData.nextReviewDate, 'MMMM d, yyyy')}
                   </p>
@@ -183,9 +202,9 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
           {scheduleData.isReviewed && (
             <div className="p-4 rounded-lg border bg-green-500/10 border-green-500/20">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-green-700 dark:text-green-400 mb-1">Completed</h3>
+                  <h3 className="font-semibold text-green-700 dark:text-green-400 mb-1">Reviewed ✓</h3>
                   <p className="text-sm text-muted-foreground">
                     This revision has been marked as reviewed
                   </p>
@@ -199,11 +218,11 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
             <h3 className="font-semibold mb-3">Revision Schedule</h3>
             <div className="space-y-3">
               {/* Study Date */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Study Date</span>
+                    <span className="font-medium text-green-700 dark:text-green-400">Study Date</span>
                     <span className="text-sm text-muted-foreground">
                       {format(scheduleData.studyDate, 'MMM d, yyyy')}
                     </span>
@@ -212,50 +231,50 @@ export default function SubTopicScheduleView({ subTopicId, onClose }: SubTopicSc
                 </div>
               </div>
 
-              {/* Planned Revisions */}
-              {scheduleData.plannedDates.map((date, index) => {
-                const isPast = date < new Date();
-                const isCurrent = date.getTime() === scheduleData.nextReviewDate.getTime();
-                const isCompleted = scheduleData.isReviewed && isCurrent;
-                const isMissed = isPast && !isCompleted && isCurrent;
-
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-3 p-3 rounded-lg ${
-                      isMissed ? 'bg-destructive/10 border border-destructive' : 'bg-muted/50'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
-                    ) : isMissed ? (
-                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    )}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Revision {index + 1}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {format(date, 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                      {isMissed && (
-                        <p className="text-xs text-destructive mt-1">Missed - not yet reviewed</p>
-                      )}
-                      {isCompleted && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">Completed</p>
-                      )}
-                      {!isCurrent && !isCompleted && isPast && (
-                        <p className="text-xs text-muted-foreground mt-1">Scheduled</p>
-                      )}
-                      {!isPast && (
-                        <p className="text-xs text-muted-foreground mt-1">Upcoming</p>
-                      )}
+              {/* Revision Dates */}
+              {scheduleData.allRevisionDates.map((revision) => (
+                <div
+                  key={revision.index}
+                  className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                    revision.isReviewed
+                      ? 'bg-green-500/10 border-green-500/20'
+                      : revision.isPast
+                      ? 'bg-destructive/10 border-destructive'
+                      : 'bg-card border-border'
+                  }`}
+                >
+                  {revision.isReviewed ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                  ) : revision.isPast ? (
+                    <XCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className={`font-medium ${
+                        revision.isReviewed
+                          ? 'text-green-700 dark:text-green-400'
+                          : revision.isPast
+                          ? 'text-destructive'
+                          : ''
+                      }`}>
+                        Revision {revision.index}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {format(revision.date, 'MMM d, yyyy')}
+                      </span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {revision.isReviewed
+                        ? 'Reviewed ✓'
+                        : revision.isPast
+                        ? 'Not reviewed - overdue'
+                        : 'Scheduled'}
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
         </div>

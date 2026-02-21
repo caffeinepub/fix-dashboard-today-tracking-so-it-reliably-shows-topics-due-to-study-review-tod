@@ -1,84 +1,107 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Implement manual revision completion workflow with missed revision indicators",
+  "title": "Refine manual revision marking with persistent red/green status indicators",
   "requirements": [
     {
       "id": "REQ-2",
-      "summary": "Add visual indicators in the calendar view to show missed revisions in red for dates where scheduled revisions were not marked as reviewed",
+      "summary": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
       "acceptanceCriteria": [
-        "Calendar dates with unreviewed past revisions display in red color",
-        "Red indicators remain visible until the revision is marked as reviewed",
-        "Visual distinction between upcoming (scheduled) and overdue (missed) revisions"
+        "Mark as reviewed action updates isReviewed field to true in backend",
+        "Reviewed revisions display with green visual indicator (checkmark or color)",
+        "State persists across page refreshes and sessions",
+        "Revision schedule continues normally after marking as reviewed"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/CalendarView.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add red visual styling to calendar dates that have unreviewed past revisions. Implement logic to check if a revision date is in the past and not marked as reviewed (isReviewed: false). Apply distinct CSS classes for missed revisions (red) versus upcoming scheduled revisions. Use the existing RevisionSchedule data which includes the isReviewed field to determine status. Ensure the red indicator persists until the revision is marked as reviewed by checking isReviewed status from backend data."
+          "description": "Add useMarkRevisionAsReviewed mutation hook that calls the backend markRevisionAsReviewed function, invalidates relevant queries (revisionSchedules, allPlannedRevisionDates, subTopics, todaySubTopics), and shows success/error toast notifications"
         },
         {
-          "path": "frontend/src/utils/reviewStatus.ts",
+          "path": "frontend/src/components/CalendarView.tsx",
           "operation": "modify",
-          "description": "Add utility function to identify missed (overdue and unreviewed) revision dates. Function should accept revision schedules and return dates where nextReview is in the past and isReviewed is false. This will support the calendar view's need to highlight missed revisions in red."
+          "description": "Update styling logic to display green visual indicator (e.g., bg-green-500/10 with green border or checkmark icon) for revision dates where isReviewed is true, while keeping red indicators (existing missed revision styling) for dates where isReviewed is false"
+        },
+        {
+          "path": "frontend/src/components/TodayView.tsx",
+          "operation": "modify",
+          "description": "Add visual indicators to distinguish reviewed (green checkmark or green background) from not-reviewed (red background or alert icon) revision sessions, using the isReviewed field from RevisionSchedule data"
+        },
+        {
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
+          "operation": "modify",
+          "description": "Update the planned review dates display to show green checkmarks or green styling for dates with isReviewed true and red styling for dates with isReviewed false, ensuring visual feedback reflects backend state"
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add 'Mark as Reviewed' action button in the TodayView dashboard that allows users to complete revisions for subtopics due on the selected date",
+      "summary": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
       "acceptanceCriteria": [
-        "Button is visible for each pending revision in the dashboard",
-        "Clicking the button marks the revision as completed and updates the UI immediately",
-        "Completed revisions show completion status and timestamp"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/TodayView.tsx",
-          "operation": "modify",
-          "description": "Add 'Mark as Reviewed' button for each subtopic displayed in TodayView. Wire the button to call the existing markRevisionAsReviewed backend function with the subtopicId. Use the useMarkRevisionAsReviewed mutation hook (to be created in useQueries.ts). Update the UI to show completion status after marking. Display the revision's isReviewed status and show visual feedback when a revision is completed. Handle both due today and overdue sections appropriately."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add useMarkRevisionAsReviewed mutation hook that calls actor.markRevisionAsReviewed(subTopicId). Include toast notifications for success and error states. Invalidate relevant queries after successful mutation: revisionSchedule, todaySubTopics, plannedRevisionDates, and allPlannedRevisionDates to ensure calendar and dashboard views refresh with updated isReviewed status."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Add 'Mark as Reviewed' action button in the SubTopicScheduleView calendar dialog that allows users to complete revisions when viewing a subtopic's schedule from the calendar",
-      "acceptanceCriteria": [
-        "Button appears for pending revisions when viewing subtopic schedule from calendar",
-        "Marking a revision as reviewed updates both the schedule view and calendar display",
-        "Button is disabled or hidden for already completed revisions"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/SubTopicScheduleView.tsx",
-          "operation": "modify",
-          "description": "Add 'Mark as Reviewed' button in the SubTopicScheduleView dialog. Use the useMarkRevisionAsReviewed mutation hook to call markRevisionAsReviewed for the current subtopic. Show the button only when the subtopic has unreviewed revisions (check isReviewed status from revision schedule data). Disable or hide the button if the revision is already marked as reviewed. Update the dialog UI immediately after marking to reflect the new reviewed status. Display completion timestamp when available."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Ensure that when a missed revision is marked as reviewed after its scheduled date, it transitions from red (missed) to completed status in all views",
-      "acceptanceCriteria": [
-        "Marking a late revision as reviewed removes red missed indicators",
-        "Calendar updates to reflect completion status immediately",
-        "Dashboard no longer shows the revision as overdue after completion"
+        "Calendar view shows revision sessions with red/green status indicators",
+        "Users can click or interact with revision sessions in calendar to mark them reviewed",
+        "Visual feedback confirms the action was successful",
+        "Calendar updates to show green status immediately after marking"
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/CalendarView.tsx",
           "operation": "modify",
-          "description": "Ensure that when revision schedules are refetched after marking as reviewed, the calendar immediately removes red missed indicators from dates where revisions are now marked as reviewed. Verify that the calendar re-renders correctly when the plannedRevisionDates or revisionSchedule queries are invalidated. Update conditional rendering logic to check isReviewed status and only show red indicators for dates with unreviewed past revisions."
+          "description": "Add mark as reviewed button or action to the revision sessions displayed when a date is selected, wire it to the useMarkRevisionAsReviewed mutation hook, and ensure the calendar view updates immediately after successful mutation through query invalidation"
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
+      "acceptanceCriteria": [
+        "Topics view shows all revision schedules with red/green status indicators",
+        "Each revision session has a clear mark as reviewed action button",
+        "Status updates reflect immediately in the topics view",
+        "Completed revision count is visible per topic"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TopicsView.tsx",
+          "operation": "modify",
+          "description": "Add visual indicators (red/green badges or icons) to subtopics based on their revision schedule isReviewed status, include a mark as reviewed button for each subtopic's pending revisions, and display completed revision count per subtopic using the reviewCount field from RevisionSchedule"
+        },
+        {
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
+          "operation": "modify",
+          "description": "Add a prominent mark as reviewed button for the current pending revision, wire it to the useMarkRevisionAsReviewed mutation, ensure the button is disabled or hidden when the revision is already marked as reviewed, and display the total reviewCount prominently"
         },
         {
           "path": "frontend/src/components/TodayView.tsx",
           "operation": "modify",
-          "description": "Ensure that after marking a revision as reviewed, the TodayView immediately removes the subtopic from the overdue or due today list if it no longer has pending revisions. Verify proper query invalidation triggers re-render with updated data. Update the overdue calculation logic to exclude revisions where isReviewed is true."
+          "description": "Add mark as reviewed button to each revision item in the TodayView, wire it to the useMarkRevisionAsReviewed mutation hook, and ensure visual feedback updates immediately after marking to show green completion status"
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
+      "acceptanceCriteria": [
+        "Each topic shows total number of completed reviews",
+        "Counter updates when revisions are marked as reviewed",
+        "Count is visible in both topics section and topic detail view"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TopicsView.tsx",
+          "operation": "modify",
+          "description": "Display the reviewCount from RevisionSchedule data as a badge or counter next to each subtopic in the topics list, showing how many times the subtopic has been reviewed"
+        },
+        {
+          "path": "frontend/src/components/TopicDetailView.tsx",
+          "operation": "modify",
+          "description": "Add reviewCount display in the subtopic details within the TopicDetailView modal, showing the completion count for each subtopic under the selected main topic"
+        },
+        {
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
+          "operation": "modify",
+          "description": "Display the reviewCount prominently in the SubTopicScheduleView modal header or progress section, updating it immediately when a revision is marked as reviewed through query invalidation"
         }
       ]
     }

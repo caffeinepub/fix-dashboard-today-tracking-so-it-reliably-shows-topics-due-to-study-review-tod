@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useGetTopicsWithHierarchy, useDeleteMainTopic, useDeleteSubTopic, useMarkSubTopicCompleted, useMarkSubTopicPending } from '../hooks/useQueries';
+import { useGetTopicsWithHierarchy, useGetRevisionSchedule, useDeleteMainTopic, useDeleteSubTopic, useMarkSubTopicCompleted, useMarkSubTopicPending } from '../hooks/useQueries';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ const difficultyColors = {
 
 export default function TopicsView() {
   const { data: topicsData, isLoading } = useGetTopicsWithHierarchy();
+  const { data: revisionSchedules } = useGetRevisionSchedule();
   const deleteMainTopic = useDeleteMainTopic();
   const deleteSubTopic = useDeleteSubTopic();
   const markCompleted = useMarkSubTopicCompleted();
@@ -49,6 +50,11 @@ export default function TopicsView() {
     });
     return map;
   }, [subTopics]);
+
+  const getReviewCount = (subTopicId: bigint): number => {
+    const schedule = revisionSchedules?.find(s => s.subTopicId === subTopicId);
+    return schedule ? Number(schedule.reviewCount) : 0;
+  };
 
   const toggleExpanded = (mainTopicId: string) => {
     setExpandedTopics(prev => {
@@ -109,10 +115,12 @@ export default function TopicsView() {
     }
   };
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingMainTopic(null);
-    setEditingSubTopic(null);
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingMainTopic(null);
+      setEditingSubTopic(null);
+    }
   };
 
   const handleViewDetails = (mainTopic: MainTopic) => {
@@ -250,6 +258,7 @@ export default function TopicsView() {
                               <h4 className="text-sm font-semibold text-muted-foreground">Active Subtopics</h4>
                               {activeSubs.map((subTopic) => {
                                 const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                                const reviewCount = getReviewCount(subTopic.id);
                                 return (
                                   <div
                                     key={subTopic.id.toString()}
@@ -260,6 +269,9 @@ export default function TopicsView() {
                                         <h5 className="font-semibold">{subTopic.title}</h5>
                                         <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
                                           {subTopic.difficulty}
+                                        </Badge>
+                                        <Badge variant="outline" className="text-xs">
+                                          {reviewCount} reviews
                                         </Badge>
                                       </div>
                                       <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
@@ -315,6 +327,7 @@ export default function TopicsView() {
                               <h4 className="text-sm font-semibold text-muted-foreground">Completed Subtopics</h4>
                               {completedSubs.map((subTopic) => {
                                 const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                                const reviewCount = getReviewCount(subTopic.id);
                                 return (
                                   <div
                                     key={subTopic.id.toString()}
@@ -325,6 +338,9 @@ export default function TopicsView() {
                                         <h5 className="font-semibold">{subTopic.title}</h5>
                                         <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
                                           {subTopic.difficulty}
+                                        </Badge>
+                                        <Badge variant="outline" className="text-xs">
+                                          {reviewCount} reviews
                                         </Badge>
                                       </div>
                                       <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
@@ -404,8 +420,8 @@ export default function TopicsView() {
                             <CardTitle className="text-xl">{mainTopic.title}</CardTitle>
                             <CardDescription className="mt-1">{mainTopic.description}</CardDescription>
                             <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                                All completed
+                              <Badge variant="outline" className="text-xs">
+                                {subs.length} completed
                               </Badge>
                             </div>
                           </div>
@@ -441,6 +457,7 @@ export default function TopicsView() {
                         <div className="space-y-2">
                           {subs.map((subTopic) => {
                             const studyDate = new Date(Number(subTopic.studyDate / BigInt(1_000_000)));
+                            const reviewCount = getReviewCount(subTopic.id);
                             return (
                               <div
                                 key={subTopic.id.toString()}
@@ -451,6 +468,9 @@ export default function TopicsView() {
                                     <h5 className="font-semibold">{subTopic.title}</h5>
                                     <Badge variant="outline" className={difficultyColors[subTopic.difficulty]}>
                                       {subTopic.difficulty}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {reviewCount} reviews
                                     </Badge>
                                   </div>
                                   <p className="text-sm text-muted-foreground line-clamp-1">{subTopic.description}</p>
@@ -512,11 +532,13 @@ export default function TopicsView() {
         subTopic={editingSubTopic}
       />
 
-      <TopicDetailView
-        open={detailViewOpen}
-        onOpenChange={handleDetailViewClose}
-        mainTopic={viewingMainTopic}
-      />
+      {viewingMainTopic && (
+        <TopicDetailView
+          mainTopic={viewingMainTopic}
+          open={detailViewOpen}
+          onClose={handleDetailViewClose}
+        />
+      )}
 
       {viewingSubTopicId && (
         <SubTopicScheduleView
@@ -531,8 +553,8 @@ export default function TopicsView() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.type === 'main'
-                ? 'This will permanently delete this main topic and all its subtopics. This action cannot be undone.'
-                : 'This will permanently delete this subtopic. This action cannot be undone.'}
+                ? 'This will permanently delete the main topic and all its subtopics. This action cannot be undone.'
+                : 'This will permanently delete the subtopic. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

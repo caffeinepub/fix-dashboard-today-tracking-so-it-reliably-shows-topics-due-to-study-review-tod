@@ -1,13 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Implement manual revision completion workflow with visual indicators for missed revisions.
+**Goal:** Implement persistent red/green status indicators for revision sessions with manual marking functionality.
 
 **Planned changes:**
-- Update backend to mark revisions as completed only when explicitly reviewed by user, not automatically by date
-- Add red visual indicators in calendar view for dates with unreviewed past revisions
-- Add "Mark as Reviewed" button in TodayView dashboard for pending revisions
-- Add "Mark as Reviewed" button in SubTopicScheduleView calendar dialog for pending revisions
-- Ensure missed revisions transition from red (missed) to completed status when marked as reviewed
+- All revision schedules default to "not reviewed" state (red indicator) until manually marked by the user
+- Add "mark as reviewed" action that changes revision status to green and persists in backend
+- Display mark as reviewed functionality in both calendar view and topics section
+- Show completion count for each topic indicating how many times it has been reviewed
+- Red indicators remain until user explicitly marks the revision as reviewed, regardless of date
 
-**User-visible outcome:** Users can manually mark revisions as reviewed from both the dashboard and calendar views, with missed revisions appearing in red until completed.
+**User-visible outcome:** Users can manually mark revision sessions as reviewed in both the calendar and topics views, seeing immediate visual feedback with red (pending) and green (completed) status indicators, along with a count of completed reviews per topic.

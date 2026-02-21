@@ -37,6 +37,7 @@ export interface RevisionSchedule {
     intervalDays: bigint;
     studyDate: Time;
     nextReview: Time;
+    reviewCount: bigint;
 }
 export interface RevisionResult {
     message: string;
