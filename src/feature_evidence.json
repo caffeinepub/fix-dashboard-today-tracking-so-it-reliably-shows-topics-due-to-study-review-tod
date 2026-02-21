@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-when-a-user-marks-a-revision-as-reviewed-change-its-visual-indicator-to-green-and-update-the-backend-state-to-persist-this-completion-status",
-      "featureTitle": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
+      "featureId": "feature-update-the-frontend-redo-tomorrow-button-to-reflect-that-only-incomplete-revisions-will-be-rescheduled",
+      "featureTitle": "Update the frontend redo tomorrow button to reflect that only incomplete revisions will be rescheduled",
       "files": [
-        "frontend/src/components/CalendarView.tsx",
         "frontend/src/components/SubTopicScheduleView.tsx",
-        "frontend/src/components/TodayView.tsx"
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,67 +18,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-mark-as-reviewed-functionality-in-the-calendar-view-for-revision-sessions-displayed-on-selected-dates",
-      "featureTitle": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
-      "files": [
-        "frontend/src/components/CalendarView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-mark-as-reviewed-functionality-is-available-in-the-topics-section-for-all-displayed-revision-schedules",
-      "featureTitle": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
-      "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx",
-        "frontend/src/components/TodayView.tsx",
-        "frontend/src/components/TopicsView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-display-a-count-or-indicator-showing-how-many-times-each-topic-has-been-reviewed-completed-revisions",
-      "featureTitle": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
-      "files": [
-        "frontend/src/components/SubTopicScheduleView.tsx",
-        "frontend/src/components/TopicDetailView.tsx",
-        "frontend/src/components/TopicsView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }

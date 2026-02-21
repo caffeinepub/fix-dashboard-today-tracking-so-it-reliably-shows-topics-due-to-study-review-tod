@@ -461,6 +461,52 @@ export function useMarkRevisionAsReviewed() {
   });
 }
 
+export function useMarkSpecificRevision() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ subTopicId, revisionNumber }: { subTopicId: bigint; revisionNumber: number }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.markSpecificRevision(subTopicId, BigInt(revisionNumber));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revisionSchedule'] });
+      queryClient.invalidateQueries({ queryKey: ['todaySubTopics'] });
+      queryClient.invalidateQueries({ queryKey: ['subTopicsForDate'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedRevisionDates'] });
+      queryClient.invalidateQueries({ queryKey: ['allPlannedRevisionDates'] });
+      toast.success('Revision marked as complete');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark revision: ${error.message}`);
+    },
+  });
+}
+
+export function useUnmarkSpecificRevision() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ subTopicId, revisionNumber }: { subTopicId: bigint; revisionNumber: number }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.unmarkSpecificRevision(subTopicId, BigInt(revisionNumber));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['revisionSchedule'] });
+      queryClient.invalidateQueries({ queryKey: ['todaySubTopics'] });
+      queryClient.invalidateQueries({ queryKey: ['subTopicsForDate'] });
+      queryClient.invalidateQueries({ queryKey: ['plannedRevisionDates'] });
+      queryClient.invalidateQueries({ queryKey: ['allPlannedRevisionDates'] });
+      toast.success('Revision unmarked');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to unmark revision: ${error.message}`);
+    },
+  });
+}
+
 export function useSetUserSettings() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -506,7 +552,7 @@ export function useRescheduleRevisionToNextDay() {
       }
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['revisionSchedule'] });
       queryClient.invalidateQueries({ queryKey: ['subTopics'] });
       queryClient.invalidateQueries({ queryKey: ['topicsWithHierarchy'] });
@@ -514,7 +560,19 @@ export function useRescheduleRevisionToNextDay() {
       queryClient.invalidateQueries({ queryKey: ['subTopicsForDate'] });
       queryClient.invalidateQueries({ queryKey: ['plannedRevisionDates'] });
       queryClient.invalidateQueries({ queryKey: ['allPlannedRevisionDates'] });
-      toast.success('Revision rescheduled to tomorrow');
+      
+      // Show informative message about what was rescheduled
+      const schedule = result.updatedSchedule;
+      if (schedule) {
+        const incompleteCount = schedule.reviewStatuses.filter(status => !status).length;
+        toast.success(
+          incompleteCount > 0 
+            ? `${incompleteCount} incomplete revision${incompleteCount !== 1 ? 's' : ''} rescheduled to tomorrow`
+            : 'Revision rescheduled to tomorrow'
+        );
+      } else {
+        toast.success('Revision rescheduled to tomorrow');
+      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to reschedule: ${error.message}`);

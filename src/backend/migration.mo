@@ -1,51 +1,44 @@
-import Set "mo:core/Set";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
+import Set "mo:core/Set";
 import Principal "mo:core/Principal";
+import Time "mo:core/Time";
 
 module {
+  // Unchanged types from legacy code
+  type UUID = Nat;
   type Difficulty = { #easy; #medium; #hard };
 
   type MainTopic = {
-    id : Nat;
+    id : UUID;
     owner : Principal;
     title : Text;
     description : Text;
-    creationDate : Int;
+    creationDate : Time.Time;
   };
 
   type SubTopic = {
-    id : Nat;
-    mainTopicId : Nat;
+    id : UUID;
+    mainTopicId : UUID;
     mainTopicTitle : Text;
     owner : Principal;
     title : Text;
     description : Text;
     difficulty : Difficulty;
-    creationDate : Int;
-    studyDate : Int;
-    lastReviewed : ?Int;
+    creationDate : Time.Time;
+    studyDate : Time.Time;
+    lastReviewed : ?Time.Time;
     completed : Bool;
     currentIntervalIndex : Nat;
   };
 
-  // Old revision schedule type (without reviewCount)
-  type OldRevisionSchedule = {
-    subTopicId : Nat;
+  type RevisionSchedule = {
+    subTopicId : UUID;
     owner : Principal;
-    nextReview : Int;
+    nextReview : Time.Time;
     intervalDays : Nat;
-    studyDate : Int;
-    isReviewed : Bool;
-  };
-
-  // New revision schedule type (with reviewCount)
-  type NewRevisionSchedule = {
-    subTopicId : Nat;
-    owner : Principal;
-    nextReview : Int;
-    intervalDays : Nat;
-    studyDate : Int;
+    studyDate : Time.Time;
+    reviewStatuses : [Bool];
     isReviewed : Bool;
     reviewCount : Nat;
   };
@@ -61,36 +54,18 @@ module {
     name : Text;
   };
 
-  type StateV1 = {
-    mainTopics : Map.Map<Nat, MainTopic>;
-    subTopics : Map.Map<Nat, SubTopic>;
-    revisionSchedules : Map.Map<Nat, OldRevisionSchedule>;
+  type OldActor = {
+    mainTopics : Map.Map<UUID, MainTopic>;
+    subTopics : Map.Map<UUID, SubTopic>;
+    revisionSchedules : Map.Map<UUID, RevisionSchedule>;
     userSettings : Map.Map<Principal, UserSettings>;
     userProfiles : Map.Map<Principal, UserProfile>;
     nextTopicId : Nat;
   };
 
-  type StateV2 = {
-    mainTopics : Map.Map<Nat, MainTopic>;
-    subTopics : Map.Map<Nat, SubTopic>;
-    revisionSchedules : Map.Map<Nat, NewRevisionSchedule>;
-    userSettings : Map.Map<Principal, UserSettings>;
-    userProfiles : Map.Map<Principal, UserProfile>;
-    nextTopicId : Nat;
-  };
-
-  public func run(stateV1 : StateV1) : StateV2 {
-    let migratedSchedules = stateV1.revisionSchedules.map<Nat, OldRevisionSchedule, NewRevisionSchedule>(
-      func(_id, oldSchedule) {
-        {
-          oldSchedule with
-          reviewCount = 0;
-        };
-      }
-    );
-    {
-      stateV1 with
-      revisionSchedules = migratedSchedules;
-    };
+  // Migration is used as identity and triggers action.
+  // No type changes need. The code does not
+  public func run(old : OldActor) : OldActor {
+    old;
   };
 };

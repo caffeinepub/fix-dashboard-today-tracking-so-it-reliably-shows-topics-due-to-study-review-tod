@@ -1,77 +1,34 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-21T13:31:25.376Z",
+  "generatedAt": "2026-02-21T19:02:23.311Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 4,
+    "total": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Keep all scheduled revision sessions marked in red (using existing missed revision styling) until the user manually marks them as reviewed",
+        "summary": "Modify the redo tomorrow functionality to only reschedule revision numbers that are not marked as completed in the reviewStatuses array",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
+        "summary": "Update the frontend redo tomorrow button to reflect that only incomplete revisions will be rescheduled",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/CalendarView.tsx",
-          "frontend/src/components/TodayView.tsx",
-          "frontend/src/components/SubTopicScheduleView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/CalendarView.tsx",
-          "frontend/src/components/TodayView.tsx",
-          "frontend/src/components/SubTopicScheduleView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/CalendarView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/CalendarView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/TopicsView.tsx",
           "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/components/TodayView.tsx"
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/TopicsView.tsx",
           "frontend/src/components/SubTopicScheduleView.tsx",
-          "frontend/src/components/TodayView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/TopicsView.tsx",
-          "frontend/src/components/TopicDetailView.tsx",
-          "frontend/src/components/SubTopicScheduleView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/TopicsView.tsx",
-          "frontend/src/components/TopicDetailView.tsx",
-          "frontend/src/components/SubTopicScheduleView.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
@@ -83,15 +40,8 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/SubTopicScheduleView.tsx",
-    "frontend/src/components/TodayView.tsx",
-    "frontend/src/components/TopicDetailView.tsx",
-    "frontend/src/components/TopicsView.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

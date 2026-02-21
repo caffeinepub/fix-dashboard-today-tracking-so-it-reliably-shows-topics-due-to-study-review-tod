@@ -1,22 +1,15 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-21T13:31:25.374Z",
-  "summary": "The diff implements all requested requirements for manual revision marking with persistent red/green status indicators. Backend adds reviewCount field to RevisionSchedule with migration, frontend adds mark-as-reviewed functionality across calendar, topics, and today views with visual indicators and review count displays.",
+  "generatedAt": "2026-02-21T19:02:23.309Z",
+  "summary": "The diff implements both backend filtering logic to reschedule only incomplete revisions and frontend UI updates to reflect this behavior. Backend changes filter out completed revisions (reviewStatuses[i] = true) when rescheduling, and frontend updates include tooltip explanation and feedback toast showing incomplete revision count.",
   "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Migration module (backend/migration.mo) for adding reviewCount field to RevisionSchedule",
-      "reason": "BuildRequest constraints explicitly state 'Maintain compatibility with existing isReviewed field in RevisionSchedule' - no mention of adding new fields like reviewCount. The non-goals and requirements focus only on marking revisions as reviewed (isReviewed field), not tracking review counts.",
+      "description": "Added migration.mo file with identity migration function",
+      "reason": "BuildRequest has no requirement for migration functionality or data migration. This appears to be scaffolding or infrastructure code not requested in the specification.",
       "evidence": [
         "backend/migration.mo"
-      ]
-    },
-    {
-      "description": "Reschedule revision functionality in SubTopicScheduleView with handleReschedule function",
-      "reason": "BuildRequest does not mention rescheduling revisions. Requirements focus only on marking revisions as reviewed and displaying status indicators. Rescheduling is outside the scope of requested features.",
-      "evidence": [
-        "frontend/src/components/SubTopicScheduleView.tsx"
       ]
     }
   ],
@@ -25,11 +18,8 @@
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/CalendarView.tsx",
     "frontend/src/components/SubTopicScheduleView.tsx",
-    "frontend/src/components/TodayView.tsx",
-    "frontend/src/components/TopicDetailView.tsx",
-    "frontend/src/components/TopicsView.tsx",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]
 }

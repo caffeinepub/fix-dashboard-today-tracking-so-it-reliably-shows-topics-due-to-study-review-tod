@@ -1,107 +1,31 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Refine manual revision marking with persistent red/green status indicators",
+  "title": "Filter redo tomorrow to exclude completed revisions",
   "requirements": [
     {
       "id": "REQ-2",
-      "summary": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
+      "summary": "Update the frontend redo tomorrow button to reflect that only incomplete revisions will be rescheduled",
       "acceptanceCriteria": [
-        "Mark as reviewed action updates isReviewed field to true in backend",
-        "Reviewed revisions display with green visual indicator (checkmark or color)",
-        "State persists across page refreshes and sessions",
-        "Revision schedule continues normally after marking as reviewed"
+        "The redo tomorrow action correctly calls the backend with the filter logic",
+        "User understands that only unmarked revisions will be rescheduled",
+        "The UI reflects the updated schedule after the redo operation"
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/components/SubTopicScheduleView.tsx",
+          "operation": "modify",
+          "description": "Update the redo tomorrow button handler to work with the backend's filtering logic that only reschedules incomplete revisions. Add visual feedback showing how many incomplete revisions will be rescheduled. Update the button's tooltip or label to clarify that only unmarked (incomplete) revisions are affected. Ensure the mutation callback properly refreshes the schedule data after the reschedule operation completes."
+        },
+        {
+          "path": "frontend/src/components/CalendarView.tsx",
+          "operation": "modify",
+          "description": "Ensure the calendar view correctly reflects the updated schedule after a redo tomorrow operation, showing that only incomplete revisions were rescheduled. Verify that completed revision indicators (green status) remain unchanged and new dates only appear for previously incomplete revisions."
+        },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add useMarkRevisionAsReviewed mutation hook that calls the backend markRevisionAsReviewed function, invalidates relevant queries (revisionSchedules, allPlannedRevisionDates, subTopics, todaySubTopics), and shows success/error toast notifications"
-        },
-        {
-          "path": "frontend/src/components/CalendarView.tsx",
-          "operation": "modify",
-          "description": "Update styling logic to display green visual indicator (e.g., bg-green-500/10 with green border or checkmark icon) for revision dates where isReviewed is true, while keeping red indicators (existing missed revision styling) for dates where isReviewed is false"
-        },
-        {
-          "path": "frontend/src/components/TodayView.tsx",
-          "operation": "modify",
-          "description": "Add visual indicators to distinguish reviewed (green checkmark or green background) from not-reviewed (red background or alert icon) revision sessions, using the isReviewed field from RevisionSchedule data"
-        },
-        {
-          "path": "frontend/src/components/SubTopicScheduleView.tsx",
-          "operation": "modify",
-          "description": "Update the planned review dates display to show green checkmarks or green styling for dates with isReviewed true and red styling for dates with isReviewed false, ensuring visual feedback reflects backend state"
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
-      "acceptanceCriteria": [
-        "Calendar view shows revision sessions with red/green status indicators",
-        "Users can click or interact with revision sessions in calendar to mark them reviewed",
-        "Visual feedback confirms the action was successful",
-        "Calendar updates to show green status immediately after marking"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/CalendarView.tsx",
-          "operation": "modify",
-          "description": "Add mark as reviewed button or action to the revision sessions displayed when a date is selected, wire it to the useMarkRevisionAsReviewed mutation hook, and ensure the calendar view updates immediately after successful mutation through query invalidation"
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
-      "acceptanceCriteria": [
-        "Topics view shows all revision schedules with red/green status indicators",
-        "Each revision session has a clear mark as reviewed action button",
-        "Status updates reflect immediately in the topics view",
-        "Completed revision count is visible per topic"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/TopicsView.tsx",
-          "operation": "modify",
-          "description": "Add visual indicators (red/green badges or icons) to subtopics based on their revision schedule isReviewed status, include a mark as reviewed button for each subtopic's pending revisions, and display completed revision count per subtopic using the reviewCount field from RevisionSchedule"
-        },
-        {
-          "path": "frontend/src/components/SubTopicScheduleView.tsx",
-          "operation": "modify",
-          "description": "Add a prominent mark as reviewed button for the current pending revision, wire it to the useMarkRevisionAsReviewed mutation, ensure the button is disabled or hidden when the revision is already marked as reviewed, and display the total reviewCount prominently"
-        },
-        {
-          "path": "frontend/src/components/TodayView.tsx",
-          "operation": "modify",
-          "description": "Add mark as reviewed button to each revision item in the TodayView, wire it to the useMarkRevisionAsReviewed mutation hook, and ensure visual feedback updates immediately after marking to show green completion status"
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
-      "acceptanceCriteria": [
-        "Each topic shows total number of completed reviews",
-        "Counter updates when revisions are marked as reviewed",
-        "Count is visible in both topics section and topic detail view"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/TopicsView.tsx",
-          "operation": "modify",
-          "description": "Display the reviewCount from RevisionSchedule data as a badge or counter next to each subtopic in the topics list, showing how many times the subtopic has been reviewed"
-        },
-        {
-          "path": "frontend/src/components/TopicDetailView.tsx",
-          "operation": "modify",
-          "description": "Add reviewCount display in the subtopic details within the TopicDetailView modal, showing the completion count for each subtopic under the selected main topic"
-        },
-        {
-          "path": "frontend/src/components/SubTopicScheduleView.tsx",
-          "operation": "modify",
-          "description": "Display the reviewCount prominently in the SubTopicScheduleView modal header or progress section, updating it immediately when a revision is marked as reviewed through query invalidation"
+          "description": "Verify that the rescheduleRevisionToNextDay mutation properly invalidates and refetches related queries (revision schedules, subtopics with study dates, calendar data) to ensure the UI reflects the backend's filtered rescheduling. Add appropriate toast notifications to inform users about the number of incomplete revisions that were rescheduled."
         }
       ]
     }

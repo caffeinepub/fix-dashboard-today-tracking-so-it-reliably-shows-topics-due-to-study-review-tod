@@ -118,6 +118,7 @@ export interface RevisionSchedule {
     subTopicId: UUID;
     intervalDays: bigint;
     studyDate: Time;
+    reviewStatuses: Array<boolean>;
     nextReview: Time;
     reviewCount: bigint;
 }
@@ -181,12 +182,14 @@ export interface backendInterface {
     } | null>;
     isCallerAdmin(): Promise<boolean>;
     markRevisionAsReviewed(subTopicId: UUID): Promise<void>;
+    markSpecificRevision(subTopicId: UUID, revisionNumber: bigint): Promise<void>;
     markSubTopicCompleted(id: UUID): Promise<void>;
     markSubTopicPending(id: UUID): Promise<void>;
     rescheduleRevisionToNextDay(subTopicId: UUID): Promise<RevisionResult>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     scheduleNextReview(subTopicId: UUID, days: bigint): Promise<void>;
     setUserSettings(easyIntervals: Array<bigint>, mediumIntervals: Array<bigint>, hardIntervals: Array<bigint>, preferredDays: Array<bigint>): Promise<void>;
+    unmarkSpecificRevision(subTopicId: UUID, revisionNumber: bigint): Promise<void>;
     updateIntervalIndex(subTopicId: UUID, newIndex: bigint): Promise<void>;
     updateMainTopic(id: UUID, title: string, description: string): Promise<void>;
     updateRevisionSchedule(subTopicId: UUID): Promise<RevisionSchedule>;
@@ -548,6 +551,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async markSpecificRevision(arg0: UUID, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markSpecificRevision(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markSpecificRevision(arg0, arg1);
+            return result;
+        }
+    }
     async markSubTopicCompleted(arg0: UUID): Promise<void> {
         if (this.processError) {
             try {
@@ -629,6 +646,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.setUserSettings(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async unmarkSpecificRevision(arg0: UUID, arg1: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.unmarkSpecificRevision(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.unmarkSpecificRevision(arg0, arg1);
             return result;
         }
     }

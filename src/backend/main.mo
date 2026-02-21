@@ -6,12 +6,14 @@ import Set "mo:core/Set";
 import Time "mo:core/Time";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
-import Text "mo:core/Text";
 import Int "mo:core/Int";
 import Principal "mo:core/Principal";
-import Migration "migration";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+import Text "mo:core/Text";
+
+import Migration "migration";
 
 (with migration = Migration.run)
 actor {
@@ -56,6 +58,7 @@ actor {
     nextReview : Time.Time;
     intervalDays : Nat;
     studyDate : Time.Time;
+    reviewStatuses : [Bool];
     isReviewed : Bool;
     reviewCount : Nat;
   };
@@ -226,6 +229,7 @@ actor {
           nextReview = studyDate;
           intervalDays = 0;
           studyDate;
+          reviewStatuses = [false, false, false, false, false];
           isReviewed = false;
           reviewCount = 0;
         };
@@ -551,6 +555,7 @@ actor {
           nextReview = Time.now() + (intervalDays : Int) * dayLength;
           intervalDays;
           studyDate = subTopic.studyDate;
+          reviewStatuses = [false, false, false, false, false];
           isReviewed = false;
           reviewCount = newReviewCount;
         };
@@ -572,6 +577,94 @@ actor {
         };
         let updatedSchedule : RevisionSchedule = {
           schedule with isReviewed = true;
+        };
+        revisionSchedules.add(subTopicId, updatedSchedule);
+      };
+    };
+  };
+
+  public shared ({ caller }) func markSpecificRevision(subTopicId : UUID, revisionNumber : Nat) : async () {
+    if (revisionNumber < 1 or revisionNumber > 5) {
+      Runtime.trap("Invalid revision number. Must be between 1 and 5");
+    };
+
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark revisions as reviewed");
+    };
+
+    switch (revisionSchedules.get(subTopicId)) {
+      case (null) { Runtime.trap("Revision schedule not found") };
+      case (?schedule) {
+        if (schedule.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only mark your own revisions as reviewed");
+        };
+
+        var updatedStatuses = Array.tabulate(
+          5,
+          func(i) {
+            if (i == (revisionNumber - 1)) { true } else {
+              if (i < schedule.reviewStatuses.size()) {
+                schedule.reviewStatuses[i];
+              } else { false };
+            };
+          },
+        );
+
+        let newReviewCount = updatedStatuses.foldLeft(
+          0,
+          func(count, status) {
+            if (status) { count + 1 } else { count };
+          },
+        );
+
+        let updatedSchedule : RevisionSchedule = {
+          schedule with
+          reviewStatuses = updatedStatuses;
+          reviewCount = newReviewCount;
+        };
+        revisionSchedules.add(subTopicId, updatedSchedule);
+      };
+    };
+  };
+
+  public shared ({ caller }) func unmarkSpecificRevision(subTopicId : UUID, revisionNumber : Nat) : async () {
+    if (revisionNumber < 1 or revisionNumber > 5) {
+      Runtime.trap("Invalid revision number. Must be between 1 and 5");
+    };
+
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can mark revisions as reviewed");
+    };
+
+    switch (revisionSchedules.get(subTopicId)) {
+      case (null) { Runtime.trap("Revision schedule not found") };
+      case (?schedule) {
+        if (schedule.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+          Runtime.trap("Unauthorized: Can only mark your own revisions as reviewed");
+        };
+
+        var updatedStatuses = Array.tabulate(
+          5,
+          func(i) {
+            if (i == (revisionNumber - 1)) { false } else {
+              if (i < schedule.reviewStatuses.size()) {
+                schedule.reviewStatuses[i];
+              } else { false };
+            };
+          },
+        );
+
+        let newReviewCount = updatedStatuses.foldLeft(
+          0,
+          func(count, status) {
+            if (status) { count + 1 } else { count };
+          },
+        );
+
+        let updatedSchedule : RevisionSchedule = {
+          schedule with
+          reviewStatuses = updatedStatuses;
+          reviewCount = newReviewCount;
         };
         revisionSchedules.add(subTopicId, updatedSchedule);
       };
@@ -609,6 +702,7 @@ actor {
           nextReview = Time.now() + (days : Int) * (24 * 60 * 60 * 1_000_000_000 : Nat);
           intervalDays = days;
           studyDate = subTopic.studyDate;
+          reviewStatuses = [false, false, false, false, false];
           isReviewed = false;
           reviewCount = 0;
         };
@@ -803,14 +897,27 @@ actor {
           };
         };
 
+        // Preserve completed revisions, reset only incomplete ones
+        let existingSchedule = revisionSchedules.get(subTopicId);
+        let preservedStatuses = switch (existingSchedule) {
+          case (null) { [false, false, false, false, false] };
+          case (?schedule) { schedule.reviewStatuses };
+        };
+
         let newSchedule : RevisionSchedule = {
           subTopicId;
           owner = caller;
           nextReview = currentTime + (1 : Int) * dayLength;
           intervalDays = if (intervals.size() > 0) { intervals[0] } else { 0 };
           studyDate = subTopic.studyDate;
+          reviewStatuses = preservedStatuses; // Preserve completed revisions
           isReviewed = false;
-          reviewCount = 0;
+          reviewCount = preservedStatuses.foldLeft(
+            0,
+            func(count, status) {
+              if (status) { count + 1 } else { count };
+            },
+          );
         };
 
         revisionSchedules.add(subTopicId, newSchedule);
@@ -822,7 +929,7 @@ actor {
 
         {
           success = true;
-          message = "Revision rescheduled to tomorrow and future intervals recalculated";
+          message = "Revision rescheduled to tomorrow, preserving completed revisions";
           updatedSchedule = ?newSchedule;
         };
       };

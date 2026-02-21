@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useGetSubTopics, useGetRevisionSchedule, useGetAllPlannedRevisionDates, useMarkRevisionAsReviewed } from '../hooks/useQueries';
+import { useGetSubTopics, useGetRevisionSchedule, useGetAllPlannedRevisionDates, useMarkSpecificRevision, useUnmarkSpecificRevision } from '../hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, XCircle } from 'lucide-react';
@@ -8,7 +8,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { Difficulty } from '../backend';
 import { timeToDate, getDateKey } from '../utils/time';
 import SubTopicScheduleView from './SubTopicScheduleView';
-import { getMissedRevisionDates } from '../utils/reviewStatus';
+import { getMissedRevisionDates, getRevisionNumberForDate, isRevisionCompleted } from '../utils/reviewStatus';
 
 const difficultyColors = {
   [Difficulty.easy]: 'bg-green-500',
@@ -24,19 +24,25 @@ export default function CalendarView() {
   const { data: subTopics, isLoading: subTopicsLoading } = useGetSubTopics();
   const { data: revisionSchedules, isLoading: schedulesLoading } = useGetRevisionSchedule();
   const { data: allPlannedDates, isLoading: plannedDatesLoading } = useGetAllPlannedRevisionDates();
-  const markAsReviewed = useMarkRevisionAsReviewed();
+  const markSpecificRevision = useMarkSpecificRevision();
+  const unmarkSpecificRevision = useUnmarkSpecificRevision();
 
   const isLoading = subTopicsLoading || schedulesLoading || plannedDatesLoading;
 
-  // Get dates with missed (unreviewed past) revisions
+  // Get dates with missed (incomplete past) revisions
   const missedRevisionDates = useMemo(() => {
-    if (!revisionSchedules) return new Set<string>();
-    return getMissedRevisionDates(revisionSchedules);
-  }, [revisionSchedules]);
+    if (!revisionSchedules || !allPlannedDates) return new Set<string>();
+    return getMissedRevisionDates(revisionSchedules, allPlannedDates);
+  }, [revisionSchedules, allPlannedDates]);
 
   // Build a map of dates to subtopics (study dates and planned revision dates)
   const dateToSubTopics = useMemo(() => {
-    const map = new Map<string, Array<{ subtopic: any; difficulty: Difficulty; isStudyDate: boolean }>>();
+    const map = new Map<string, Array<{ 
+      subtopic: any; 
+      difficulty: Difficulty; 
+      isStudyDate: boolean;
+      revisionNumber: number | null;
+    }>>();
 
     if (!subTopics || !allPlannedDates) return map;
 
@@ -50,6 +56,7 @@ export default function CalendarView() {
         subtopic,
         difficulty: subtopic.difficulty,
         isStudyDate: true,
+        revisionNumber: null,
       });
     });
 
@@ -58,7 +65,7 @@ export default function CalendarView() {
       const subtopic = subTopics.find((st) => st.id === item.subTopicId);
       if (!subtopic) return;
 
-      item.plannedDates.forEach((date) => {
+      item.plannedDates.forEach((date, index) => {
         const dateKey = getDateKey(timeToDate(date));
         if (!map.has(dateKey)) {
           map.set(dateKey, []);
@@ -67,6 +74,7 @@ export default function CalendarView() {
           subtopic,
           difficulty: item.difficulty,
           isStudyDate: false,
+          revisionNumber: index + 1,
         });
       });
     });
@@ -108,9 +116,13 @@ export default function CalendarView() {
     setSelectedSubTopicId(null);
   };
 
-  const handleMarkAsReviewed = async (subTopicId: bigint, e: React.MouseEvent) => {
+  const handleToggleRevision = async (subTopicId: bigint, revisionNumber: number, isCompleted: boolean, e: React.MouseEvent) => {
     e.stopPropagation();
-    await markAsReviewed.mutateAsync(subTopicId);
+    if (isCompleted) {
+      await unmarkSpecificRevision.mutateAsync({ subTopicId, revisionNumber });
+    } else {
+      await markSpecificRevision.mutateAsync({ subTopicId, revisionNumber });
+    }
   };
 
   if (isLoading) {
@@ -120,6 +132,8 @@ export default function CalendarView() {
       </div>
     );
   }
+
+  const isPending = markSpecificRevision.isPending || unmarkSpecificRevision.isPending;
 
   return (
     <div className="space-y-6">
@@ -193,15 +207,21 @@ export default function CalendarView() {
           <CardContent className="space-y-2">
             {subtopicsForSelectedDate.map((item, idx) => {
               const schedule = revisionSchedules?.find(s => s.subTopicId === item.subtopic.id);
-              const isMissed = schedule && !schedule.isReviewed && timeToDate(schedule.nextReview) < new Date();
-              const isReviewed = schedule?.isReviewed || false;
+              
+              // Determine if this specific revision is completed
+              const isCompleted = item.revisionNumber && schedule 
+                ? isRevisionCompleted(schedule, item.revisionNumber)
+                : item.isStudyDate; // Study date is always considered complete
+              
+              // Check if this revision is overdue (past date and not completed)
+              const isOverdue = !isCompleted && selectedDate < new Date();
               
               return (
                 <div
                   key={`${item.subtopic.id.toString()}-${idx}`}
                   className={`p-3 rounded-lg border transition-colors ${
-                    isMissed ? 'border-destructive bg-destructive/5' : 
-                    isReviewed ? 'border-green-500/20 bg-green-500/5' : 'bg-card'
+                    isOverdue ? 'border-destructive bg-destructive/5' : 
+                    isCompleted ? 'border-green-500/20 bg-green-500/5' : 'bg-card'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-4">
@@ -210,9 +230,9 @@ export default function CalendarView() {
                       className="flex-1 text-left hover:opacity-80 transition-opacity"
                     >
                       <div className="flex items-center gap-2">
-                        {isReviewed ? (
+                        {isCompleted ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                        ) : isMissed ? (
+                        ) : isOverdue ? (
                           <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
                         ) : null}
                         <h3 className="font-semibold truncate">{item.subtopic.title}</h3>
@@ -226,42 +246,45 @@ export default function CalendarView() {
                         >
                           {item.difficulty}
                         </Badge>
-                        {isMissed && (
+                        {isOverdue && (
                           <Badge variant="destructive" className="text-xs">
-                            Not Reviewed
+                            Incomplete
                           </Badge>
                         )}
-                        {isReviewed && (
+                        {isCompleted && (
                           <Badge className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                            Reviewed
+                            Complete
                           </Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate mt-1">{item.subtopic.mainTopicTitle}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-xs text-muted-foreground">
-                          {item.isStudyDate ? 'Study Date' : 'Revision'}
+                          {item.isStudyDate ? 'Study Date' : `Revision ${item.revisionNumber}`}
                         </p>
                         {schedule && (
                           <Badge variant="outline" className="text-xs">
-                            {Number(schedule.reviewCount)} reviews completed
+                            {Number(schedule.reviewCount)} / 5 completed
                           </Badge>
                         )}
                       </div>
                     </button>
-                    {!isReviewed && isMissed && schedule && (
+                    {!item.isStudyDate && item.revisionNumber && schedule && (
                       <Button
                         size="sm"
-                        onClick={(e) => handleMarkAsReviewed(item.subtopic.id, e)}
-                        disabled={markAsReviewed.isPending}
+                        variant={isCompleted ? 'outline' : 'default'}
+                        onClick={(e) => handleToggleRevision(item.subtopic.id, item.revisionNumber!, isCompleted, e)}
+                        disabled={isPending}
                         className="flex-shrink-0"
                       >
-                        {markAsReviewed.isPending ? (
+                        {isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : isCompleted ? (
+                          <XCircle className="h-4 w-4 mr-2" />
                         ) : (
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                         )}
-                        Mark as Reviewed
+                        {isCompleted ? 'Unmark' : 'Mark Complete'}
                       </Button>
                     )}
                   </div>

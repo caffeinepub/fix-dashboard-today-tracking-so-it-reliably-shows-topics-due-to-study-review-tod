@@ -1,6 +1,6 @@
 {
   "frontend/src/App.tsx": "Main application component with authentication flow, profile setup modal, theme provider, and dashboard routing.",
-  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including hierarchical topics, revision schedules, user profiles, settings, and new useMarkRevisionAsReviewed mutation hook with proper cache invalidation for marking revisions as reviewed.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including mutations for marking/unmarking individual revisions (1-5), with the useRescheduleRevisionToNextDay mutation now providing detailed toast feedback showing how many incomplete revisions were rescheduled while preserving completed ones.",
   "frontend/src/components/Header.tsx": "Application header with branding, theme toggle, and authentication button.",
   "frontend/src/components/Footer.tsx": "Simple footer with attribution and link to caffeine.ai.",
   "frontend/src/components/ProfileSetupModal.tsx": "Modal dialog for first-time user profile setup requiring name input.",
@@ -8,11 +8,11 @@
   "frontend/src/components/TodayView.tsx": "Revision dashboard displaying overdue/missed and due today subtopics with red/green visual indicators, \"Mark as Reviewed\" buttons, and review count badges for each revision item.",
   "frontend/src/components/TopicsView.tsx": "Topic management interface with hierarchical display of main topics and subtopics, showing review count badges for each subtopic alongside difficulty and completion status, with fixed prop name for TopicDialog component.",
   "frontend/src/components/TopicDialog.tsx": "Dialog component with tabbed interface for creating/editing main topics and subtopics, including main topic selection, difficulty levels, and study date picker for subtopics.",
-  "frontend/src/components/CalendarView.tsx": "Interactive monthly calendar with red highlighting for missed revisions, displaying topics for selected dates with green/red status indicators, review counts, and \"Mark as Reviewed\" buttons in the date detail view.",
+  "frontend/src/components/CalendarView.tsx": "Interactive monthly calendar displaying revision numbers (1-5) for each scheduled date with individual completion status indicators (green/red) and mark/unmark buttons for each specific revision.",
   "frontend/src/components/SettingsView.tsx": "User settings interface for customizing revision interval sequences per difficulty level (easy, medium, hard) with add/remove functionality, reset to defaults, and preferred review days selection.",
   "frontend/src/index.css": "Global styles with OKLCH color system featuring a purple-blue primary color scheme for both light and dark modes.",
   "frontend/src/components/TopicDetailView.tsx": "Modal displaying all subtopics under a main topic with review count badges, clickable rows to open individual subtopic schedules, separated into active and completed sections.",
   "frontend/src/utils/time.ts": "Time utility functions for converting between ICP Time and JavaScript Date objects, determining date status (overdue/today/future/on-date), date normalization, and date-to-Time conversion for backend queries.",
-  "frontend/src/components/SubTopicScheduleView.tsx": "Dialog showing complete revision schedule with progress bar, review count display, red/green status indicators for each revision date, and \"Mark as Reviewed\" button for pending revisions.",
-  "frontend/src/utils/reviewStatus.ts": "Shared utility functions for computing due/pending reviews, planned items for a specific date, and identifying missed revision dates (unreviewed past revisions) for calendar highlighting, ensuring consistent logic across TodayView and CalendarView."
+  "frontend/src/components/SubTopicScheduleView.tsx": "Dialog showing complete revision schedule with individual revision numbers (1-5), each with mark/unmark toggle buttons that independently track completion status, and a \"Redo Tomorrow\" button that only reschedules incomplete revisions while preserving completed ones, with a badge showing the count of incomplete revisions and a tooltip explaining the behavior.",
+  "frontend/src/utils/reviewStatus.ts": "Shared utility functions for computing missed revision dates based on individual revision completion status from reviewStatuses array, including helpers to get revision numbers for dates and check if specific revisions are completed."
 }

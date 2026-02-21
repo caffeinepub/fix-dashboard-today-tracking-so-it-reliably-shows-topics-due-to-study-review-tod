@@ -1,40 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Study revision tracker with manual review marking system",
+  "summary": "New project",
   "architectural_notes": [],
   "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-when-a-user-marks-a-revision-as-reviewed-change-its-visual-indicator-to-green-and-update-the-backend-state-to-persist-this-completion-status",
-      "title": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
+      "id": "feature-update-the-frontend-redo-tomorrow-button-to-reflect-that-only-incomplete-revisions-will-be-rescheduled",
+      "title": "Update the frontend redo tomorrow button to reflect that only incomplete revisions will be rescheduled",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-mark-as-reviewed-functionality-in-the-calendar-view-for-revision-sessions-displayed-on-selected-dates",
-      "title": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-mark-as-reviewed-functionality-is-available-in-the-topics-section-for-all-displayed-revision-schedules",
-      "title": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-display-a-count-or-indicator-showing-how-many-times-each-topic-has-been-reviewed-completed-revisions",
-      "title": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
-      "reqIds": [
-        "REQ-5"
       ],
       "version": 1
     }
@@ -42,20 +18,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Manual revision tracking: topics marked red until reviewed, turn green when marked complete, available in calendar and topics views",
+      "summary": "Redo tomorrow should only reschedule unmarked revisions",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Keep all scheduled revision sessions marked in red (using existing missed revision styling) until the user manually marks them as reviewed",
+      "summary": "Modify the redo tomorrow functionality to only reschedule revision numbers that are not marked as completed in the reviewStatuses array",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Refine manual revision marking with persistent red/green status indicators",
+  "projectName": "Filter redo tomorrow to exclude completed revisions",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

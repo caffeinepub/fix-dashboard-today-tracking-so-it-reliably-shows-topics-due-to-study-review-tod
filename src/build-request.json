@@ -1,113 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Refine manual revision marking with persistent red/green status indicators",
+  "title": "Filter redo tomorrow to exclude completed revisions",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Keep all scheduled revision sessions marked in red (using existing missed revision styling) until the user manually marks them as reviewed",
+      "text": "Modify the redo tomorrow functionality to only reschedule revision numbers that are not marked as completed in the reviewStatuses array",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-final"
+          "msg-latest"
         ],
         "quotes": [
-          "scheduled topics remain marked in red until I manually mark them as reviewed"
+          "In redo tomorrow option if I click it should only consider which is not marked",
+          "If I mark it has completed it shouldn't consider for redo schedule"
         ]
       },
       "acceptanceCriteria": [
-        "All revision schedules default to isReviewed: false when created",
-        "Revision sessions remain in 'not reviewed' state regardless of date passing",
-        "Only explicit user action changes isReviewed to true"
+        "When redo tomorrow is clicked, only unmarked revisions (reviewStatuses[i] = false) are rescheduled",
+        "Revisions marked as completed (reviewStatuses[i] = true) are not included in the new schedule",
+        "The reviewStatuses array is preserved for the rescheduled revisions",
+        "Completed revision statuses remain unchanged after rescheduling"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "When a user marks a revision as reviewed, change its visual indicator to green and update the backend state to persist this completion status",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-final"
-        ],
-        "quotes": [
-          "Once I mark a topic as reviewed, it should turn green and the schedule continues as planned"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Mark as reviewed action updates isReviewed field to true in backend",
-        "Reviewed revisions display with green visual indicator (checkmark or color)",
-        "State persists across page refreshes and sessions",
-        "Revision schedule continues normally after marking as reviewed"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add mark as reviewed functionality in the calendar view for revision sessions displayed on selected dates",
+      "text": "Update the frontend redo tomorrow button to reflect that only incomplete revisions will be rescheduled",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-final"
+          "msg-latest"
         ],
         "quotes": [
-          "This option to mark as reviewed should be available in both the calendar view and the topics sec"
+          "In redo tomorrow option if I click it should only consider which is not marked"
         ]
       },
       "acceptanceCriteria": [
-        "Calendar view shows revision sessions with red/green status indicators",
-        "Users can click or interact with revision sessions in calendar to mark them reviewed",
-        "Visual feedback confirms the action was successful",
-        "Calendar updates to show green status immediately after marking"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Ensure mark as reviewed functionality is available in the topics section for all displayed revision schedules",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-final"
-        ],
-        "quotes": [
-          "This option to mark as reviewed should be available in both the calendar view and the topics sec"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Topics view shows all revision schedules with red/green status indicators",
-        "Each revision session has a clear mark as reviewed action button",
-        "Status updates reflect immediately in the topics view",
-        "Completed revision count is visible per topic"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Display a count or indicator showing how many times each topic has been reviewed (completed revisions)",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-earlier"
-        ],
-        "quotes": [
-          "So that I will know how many times I have completed revising each topic"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each topic shows total number of completed reviews",
-        "Counter updates when revisions are marked as reviewed",
-        "Count is visible in both topics section and topic detail view"
+        "The redo tomorrow action correctly calls the backend with the filter logic",
+        "User understands that only unmarked revisions will be rescheduled",
+        "The UI reflects the updated schedule after the redo operation"
       ]
     }
   ],
   "constraints": [
-    "Preserve existing revision schedule calculation logic",
-    "Maintain compatibility with existing isReviewed field in RevisionSchedule",
-    "Do not change the spaced repetition interval settings",
-    "Keep existing calendar and topics view layouts functional"
+    "Preserve the existing reviewStatuses array structure in RevisionSchedule",
+    "Do not modify completed revision statuses during rescheduling"
   ],
   "nonGoals": [
-    "Automatic marking of revisions as complete when date passes",
-    "Changing the spaced repetition algorithm or intervals",
-    "Adding bulk mark as reviewed functionality",
-    "Implementing undo functionality for marking reviews"
+    "Changing the revision numbering system",
+    "Modifying how revisions are marked as complete",
+    "Altering the calendar or topics view display logic"
   ],
   "imageRequirements": {
     "required": [],

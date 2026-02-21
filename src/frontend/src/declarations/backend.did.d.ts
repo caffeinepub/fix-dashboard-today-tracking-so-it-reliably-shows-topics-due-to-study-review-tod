@@ -31,6 +31,7 @@ export interface RevisionSchedule {
   'subTopicId' : UUID,
   'intervalDays' : bigint,
   'studyDate' : Time,
+  'reviewStatuses' : Array<boolean>,
   'nextReview' : Time,
   'reviewCount' : bigint,
 }
@@ -108,6 +109,7 @@ export interface _SERVICE {
   >,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'markRevisionAsReviewed' : ActorMethod<[UUID], undefined>,
+  'markSpecificRevision' : ActorMethod<[UUID, bigint], undefined>,
   'markSubTopicCompleted' : ActorMethod<[UUID], undefined>,
   'markSubTopicPending' : ActorMethod<[UUID], undefined>,
   'rescheduleRevisionToNextDay' : ActorMethod<[UUID], RevisionResult>,
@@ -117,6 +119,7 @@ export interface _SERVICE {
     [Array<bigint>, Array<bigint>, Array<bigint>, Array<bigint>],
     undefined
   >,
+  'unmarkSpecificRevision' : ActorMethod<[UUID, bigint], undefined>,
   'updateIntervalIndex' : ActorMethod<[UUID, bigint], undefined>,
   'updateMainTopic' : ActorMethod<[UUID, string, string], undefined>,
   'updateRevisionSchedule' : ActorMethod<[UUID], RevisionSchedule>,
